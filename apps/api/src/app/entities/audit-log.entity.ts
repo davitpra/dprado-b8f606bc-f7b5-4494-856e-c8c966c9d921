@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('audit_logs')
@@ -25,10 +33,11 @@ export class AuditLog {
   @Column({ type: 'simple-json' })
   details: Record<string, unknown>;
 
+  @Index()
   @CreateDateColumn()
   timestamp: Date;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (u) => u.auditLogs)
   @JoinColumn({ name: 'userId' })
   user: User;
 }

@@ -13,6 +13,8 @@ import { Exclude } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
 import { Organization } from './organization.entity';
 import { UserRoleEntity } from './user-role.entity';
+import { Task } from './task.entity';
+import { AuditLog } from './audit-log.entity';
 
 const SALT_ROUNDS = 12;
 
@@ -48,12 +50,21 @@ export class User {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => Organization)
+  @ManyToOne(() => Organization, (org) => org.users)
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 
   @OneToMany(() => UserRoleEntity, (ur) => ur.user)
   roles: UserRoleEntity[];
+
+  @OneToMany(() => Task, (t) => t.createdBy)
+  createdTasks: Task[];
+
+  @OneToMany(() => Task, (t) => t.assignedTo)
+  assignedTasks: Task[];
+
+  @OneToMany(() => AuditLog, (al) => al.user)
+  auditLogs: AuditLog[];
 
   @BeforeInsert()
   @BeforeUpdate()

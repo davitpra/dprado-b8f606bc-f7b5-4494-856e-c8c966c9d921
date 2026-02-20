@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Department } from './department.entity';
+import { User } from './user.entity';
 
 @Entity('organizations')
 export class Organization {
@@ -14,7 +22,9 @@ export class Organization {
   @CreateDateColumn()
   createdAt: Date;
 
-  // Relations resolved lazily — declared for query-builder joins
-  // @OneToMany(() => Department, (d) => d.organization)
-  // departments: Department[];
+  @OneToMany(() => Department, (d) => d.organization)
+  departments: Department[];
+
+  @OneToMany(() => User, (u) => u.organization)
+  users: User[];
 }

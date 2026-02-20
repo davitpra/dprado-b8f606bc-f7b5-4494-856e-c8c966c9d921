@@ -3,6 +3,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -13,6 +14,9 @@ import { User } from './user.entity';
 import { Department } from './department.entity';
 
 @Entity('tasks')
+@Index(['departmentId', 'status'])
+@Index(['createdById'])
+@Index(['assignedToId'])
 export class Task {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -59,15 +63,15 @@ export class Task {
   @DeleteDateColumn()
   deletedAt: Date | null;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, (u) => u.createdTasks)
   @JoinColumn({ name: 'createdById' })
   createdBy: User;
 
-  @ManyToOne(() => User, { nullable: true })
+  @ManyToOne(() => User, (u) => u.assignedTasks, { nullable: true })
   @JoinColumn({ name: 'assignedToId' })
   assignedTo: User | null;
 
-  @ManyToOne(() => Department)
+  @ManyToOne(() => Department, (d) => d.tasks)
   @JoinColumn({ name: 'departmentId' })
   department: Department;
 }

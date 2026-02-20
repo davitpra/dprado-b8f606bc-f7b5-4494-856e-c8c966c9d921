@@ -4,9 +4,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Organization } from './organization.entity';
+import { Task } from './task.entity';
+import { UserRoleEntity } from './user-role.entity';
 
 @Entity('departments')
 export class Department {
@@ -25,7 +28,13 @@ export class Department {
   @CreateDateColumn()
   createdAt: Date;
 
-  @ManyToOne(() => Organization)
+  @ManyToOne(() => Organization, (org) => org.departments)
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
+
+  @OneToMany(() => Task, (t) => t.department)
+  tasks: Task[];
+
+  @OneToMany(() => UserRoleEntity, (ur) => ur.department)
+  userRoles: UserRoleEntity[];
 }

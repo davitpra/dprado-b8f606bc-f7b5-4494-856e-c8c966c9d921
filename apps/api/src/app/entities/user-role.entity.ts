@@ -1,9 +1,17 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+} from 'typeorm';
 import { UserRole } from '@task-management/data';
 import { User } from './user.entity';
 import { Department } from './department.entity';
 
 @Entity('user_roles')
+@Unique(['userId', 'departmentId'])
 export class UserRoleEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -21,7 +29,7 @@ export class UserRoleEntity {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @ManyToOne(() => Department, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Department, (dept) => dept.userRoles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'departmentId' })
   department: Department;
 }
