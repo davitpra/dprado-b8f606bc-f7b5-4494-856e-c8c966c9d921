@@ -1,2 +1,10 @@
-// TODO: Define IAuditLog interface
-export interface IAuditLog {}
+export interface IAuditLog {
+  id: string;
+  action: string;
+  resource: string;
+  resourceId: string;
+  userId: string;
+  ipAddress: string;
+  timestamp: string;
+  details: Record<string, unknown>;
+}
