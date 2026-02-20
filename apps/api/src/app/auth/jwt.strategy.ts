@@ -29,7 +29,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   /** Called after token is verified — attaches returned value to request.user */
   async validate(payload: JwtPayload): Promise<User> {
-    const user = await this.userRepo.findOne({ where: { id: payload.sub } });
+    const user = await this.userRepo.findOne({
+      where: { id: payload.sub },
+      relations: ['roles'],
+    });
 
     if (!user) {
       throw new UnauthorizedException('User not found');
