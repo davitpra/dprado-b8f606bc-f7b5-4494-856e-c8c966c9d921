@@ -124,7 +124,7 @@ Full-stack coding assessment. Tasks are scoped to Departments within an Organiza
 Organization
   └── Department 1 → users with roles (admin | viewer)
   └── Department 2 → users with roles (admin | viewer)
-  Organization Owner → implicit full access, NOT stored in UserRole
+  Organization Owner → OWNER role in user_roles (departmentId = null), full access
 ```
 
 ### Data Model (7 entities)
@@ -133,8 +133,8 @@ Organization
 |--------|-----------|
 | `Organization` | id, name, description, createdAt |
 | `Department` | id, name, organizationId (FK) |
-| `User` | id, email, password, firstName, lastName, organizationId (FK), **isOwner** (bool, default false) |
-| `UserRole` | id, userId (FK), **role** (admin\|viewer), **departmentId** (FK) — dept-scoped only |
+| `User` | id, email, password, firstName, lastName, organizationId (FK) |
+| `UserRole` | id, userId (FK), **role** (owner\|admin\|viewer), **departmentId** (FK, nullable) — OWNER has departmentId=null (org-wide) |
 | `Task` | id, title, status, category, priority, **position** (drag-drop order), dueDate, createdById, assignedToId (nullable), departmentId, deletedAt (soft delete) |
 | `Permission` | id, action (create\|read\|update\|delete\|invite), resource (task\|department\|user), role |
 | `AuditLog` | id, action, resource, resourceId, userId, ipAddress, timestamp, details (JSON) |
@@ -142,16 +142,17 @@ Organization
 ### RBAC Access Check Flow
 
 ```
-Is user Owner (isOwner = true)?
+Does user have OWNER role in user_roles (departmentId = null)?
   → YES: grant full access to everything
   → NO: resolve UserRole for the specific department
         Admin? → full access to dept tasks/members
         Viewer? → ownership check → allow only on own tasks
 ```
 
-- Owner has **no UserRole entries** — access is implicit and org-wide
+- OWNER is stored as a row in `user_roles` with `departmentId = null` (org-wide access)
+- `user.isOwner` is a computed getter that checks for the OWNER role in the roles relation
 - A user can be Admin in dept A and Viewer in dept B simultaneously
-- Owner and dept-scoped roles are **mutually exclusive** (`isOwner=true` → no UserRole rows)
+- OWNER and dept-scoped roles are **mutually exclusive** (OWNER role → no dept-scoped UserRole rows)
 - Always evaluate the **highest privilege** the user holds for a given department
 
 ### RBAC Permissions Summary
@@ -223,7 +224,7 @@ Organization: **Acme Corp** | Departments: **Engineering**, **Marketing**
 ### Key Technical Decisions
 
 - SQLite (`better-sqlite3`) for dev, PostgreSQL-ready via TypeORM (just swap driver + env)
-- `isOwner` flag on User (not in UserRole) — Owner bypasses all permission checks
+- OWNER role stored in `user_roles` with `departmentId = null` — `user.isOwner` is a computed getter
 - `UserRole` pivot enables multi-role per user with department scoping
 - Soft deletes on Task (`deletedAt`)
 - Audit interceptor logs all CRUD actions automatically

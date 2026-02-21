@@ -92,7 +92,6 @@ async function seed() {
       firstName: 'Alice',
       lastName: 'Owner',
       organizationId: org.id,
-      isOwner: true,
     })
   );
 
@@ -148,9 +147,14 @@ async function seed() {
 
   console.log('Created 6 users');
 
-  // ── User Roles (dept-scoped, Owner has none) ────────────────────────────────
+  // ── User Roles (OWNER = org-wide with departmentId=null, others = dept-scoped) ─
   const roleRepo = dataSource.getRepository(UserRoleEntity);
   await roleRepo.save([
+    roleRepo.create({
+      userId: owner.id,
+      role: UserRole.OWNER,
+      departmentId: null,
+    }),
     roleRepo.create({
       userId: adminEng.id,
       role: UserRole.ADMIN,

@@ -9,8 +9,9 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Exclude } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
+import { UserRole } from '@task-management/data';
 import { Organization } from './organization.entity';
 import { UserRoleEntity } from './user-role.entity';
 import { Task } from './task.entity';
@@ -43,9 +44,11 @@ export class User {
   @Column({ type: 'text' })
   organizationId: string;
 
-  /** Organization owner — bypasses all RBAC checks. Mutually exclusive with UserRole entries. */
-  @Column({ type: 'boolean', default: false })
-  isOwner: boolean;
+  /** Organization owner — derived from OWNER role in user_roles (departmentId = null). */
+  @Expose()
+  get isOwner(): boolean {
+    return Array.isArray(this.roles) && this.roles.some(r => r.role === UserRole.OWNER);
+  }
 
   @CreateDateColumn()
   createdAt: Date;

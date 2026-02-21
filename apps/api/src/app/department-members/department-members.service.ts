@@ -46,6 +46,7 @@ export class DepartmentMembersService {
 
     const targetUser = await this.userRepo.findOne({
       where: { id: dto.userId },
+      relations: ['roles'],
     });
     if (!targetUser) {
       throw new NotFoundException('User not found');

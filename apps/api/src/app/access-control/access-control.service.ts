@@ -32,7 +32,7 @@ export class AccessControlService {
     userId: string,
     departmentId: string,
     user?: User,
-  ): Promise<UserRole.ADMIN | UserRole.VIEWER | null> {
+  ): Promise<UserRole | null> {
     // Fast path: roles already loaded on the user object
     if (user?.roles) {
       const match = user.roles.find(
@@ -48,13 +48,15 @@ export class AccessControlService {
     return role?.role ?? null;
   }
 
-  /** Returns all departments where the user has at least one role. */
+  /** Returns all departments where the user has at least one dept-scoped role (excludes OWNER). */
   async getUserDepartments(userId: string): Promise<Department[]> {
     const roles = await this.userRoleRepo.find({
       where: { userId },
       relations: ['department'],
     });
-    return roles.map((r) => r.department);
+    return roles
+      .filter((r) => r.departmentId !== null)
+      .map((r) => r.department!);
   }
 
   /** Can the user read this task? */
@@ -157,7 +159,7 @@ export class AccessControlService {
     if (!role) return false;
 
     const count = await this.permissionRepo.count({
-      where: { action: action as Permission['action'], resource: resource as Permission['resource'], role },
+      where: { action: action as Permission['action'], resource: resource as Permission['resource'], role: role as Permission['role'] },
     });
     return count > 0;
   }

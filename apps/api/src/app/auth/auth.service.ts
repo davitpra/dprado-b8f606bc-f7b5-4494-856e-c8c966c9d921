@@ -10,9 +10,10 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
 
-import { IAuthResponse, LoginDto, RegisterDto } from '@task-management/data';
+import { IAuthResponse, LoginDto, RegisterDto, UserRole } from '@task-management/data';
 import { User } from '../entities/user.entity';
 import { Organization } from '../entities/organization.entity';
+import { UserRoleEntity } from '../entities/user-role.entity';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +22,8 @@ export class AuthService {
     private readonly userRepo: Repository<User>,
     @InjectRepository(Organization)
     private readonly orgRepo: Repository<Organization>,
+    @InjectRepository(UserRoleEntity)
+    private readonly userRoleRepo: Repository<UserRoleEntity>,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
   ) {}
@@ -40,16 +43,24 @@ export class AuthService {
     });
     await this.orgRepo.save(org);
 
-    // Create the user as owner of that organization
+    // Create the user (owner role assigned via user_roles below)
     const user = this.userRepo.create({
       email: dto.email,
       password: dto.password, // hashed by @BeforeInsert hook
       firstName: dto.firstName,
       lastName: dto.lastName,
       organizationId: org.id,
-      isOwner: true,
     });
     await this.userRepo.save(user);
+
+    // Assign OWNER role (org-wide, no department)
+    const ownerRole = this.userRoleRepo.create({
+      userId: user.id,
+      role: UserRole.OWNER,
+      departmentId: null,
+    });
+    await this.userRoleRepo.save(ownerRole);
+    user.roles = [ownerRole];
 
     return this.generateTokens(user);
   }
@@ -59,6 +70,7 @@ export class AuthService {
     const user = await this.userRepo
       .createQueryBuilder('user')
       .addSelect('user.password')
+      .leftJoinAndSelect('user.roles', 'roles')
       .where('user.email = :email', { email: dto.email })
       .getOne();
 
@@ -82,7 +94,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid token type');
     }
 
-    const user = await this.userRepo.findOne({ where: { id: payload.sub } });
+    const user = await this.userRepo.findOne({ where: { id: payload.sub }, relations: ['roles'] });
     if (!user) {
       throw new UnauthorizedException('User not found');
     }

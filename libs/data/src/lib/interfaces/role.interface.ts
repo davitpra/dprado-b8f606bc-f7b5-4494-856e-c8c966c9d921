@@ -1,9 +1,9 @@
 import { UserRole } from '../enums/index.js';
 
-/** UserRole pivot table — department-scoped roles (admin | viewer only, never owner) */
+/** UserRole pivot table — roles include OWNER (org-wide, departmentId=null) and dept-scoped (ADMIN | VIEWER). */
 export interface IUserRole {
   id: string;
   userId: string;
-  role: UserRole.ADMIN | UserRole.VIEWER;
-  departmentId: string;
+  role: UserRole;
+  departmentId: string | null;
 }
