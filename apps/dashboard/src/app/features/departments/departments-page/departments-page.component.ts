@@ -1,135 +1,232 @@
-import { Component, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
 import { IDepartment } from '@task-management/data';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucidePlus,
+  lucideEdit2,
+  lucideTrash2,
+  lucideBuilding2,
+} from '@ng-icons/lucide';
 import { DepartmentStore } from '../../../core/stores/department.store';
+import { DepartmentService } from '../../../core/services/department.service';
+import { DepartmentFormModalComponent } from '../department-form-modal/department-form-modal.component';
+import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-departments-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    RouterLink,
+    DatePipe,
+    NgIcon,
+    DepartmentFormModalComponent,
+    ConfirmDialogComponent,
+  ],
+  providers: [
+    provideIcons({ lucidePlus, lucideEdit2, lucideTrash2, lucideBuilding2 }),
+  ],
   template: `
     <div class="departments-page">
       <div class="page-header">
         <h1>Departments</h1>
-        <button class="btn-primary" (click)="openForm()">+ New Department</button>
+        <button class="btn-primary" (click)="openModal()">
+          <ng-icon name="lucidePlus" size="16" />
+          New Department
+        </button>
       </div>
 
-      @if (showForm()) {
-        <div class="dept-form">
-          <h3>{{ editDept() ? 'Edit Department' : 'New Department' }}</h3>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()">
-            <div class="form-group">
-              <label for="dept-name">Name *</label>
-              <input id="dept-name" formControlName="name" placeholder="Department name" />
-            </div>
-            <div class="form-group">
-              <label for="dept-desc">Description</label>
-              <textarea id="dept-desc" formControlName="description" rows="2" placeholder="Optional"></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn-cancel" (click)="cancelForm()">Cancel</button>
-              <button type="submit" class="btn-submit" [disabled]="form.invalid">
-                {{ editDept() ? 'Save' : 'Create' }}
-              </button>
-            </div>
-          </form>
-        </div>
+      @if (departmentStore.isLoading() && !departmentStore.departments().length) {
+        <div class="loading-state">Loading departments...</div>
+      }
+
+      @if (departmentStore.error() && !showModal()) {
+        <div class="error-banner">{{ departmentStore.error() }}</div>
       }
 
       <div class="departments-list">
         @for (dept of departmentStore.departments(); track dept.id) {
           <div class="dept-card">
             <div class="dept-info">
-              <h3>{{ dept.name }}</h3>
+              <div class="dept-title">
+                <ng-icon name="lucideBuilding2" size="18" />
+                <h3>{{ dept.name }}</h3>
+              </div>
               @if (dept.description) {
-                <p>{{ dept.description }}</p>
+                <p class="dept-desc">{{ dept.description }}</p>
               }
+              <span class="dept-date">Created {{ dept.createdAt | date:'mediumDate' }}</span>
             </div>
             <div class="dept-actions">
               <a [routerLink]="['/app/departments', dept.id, 'members']" class="link-btn">Members</a>
-              <button class="btn-edit" (click)="startEdit(dept)">Edit</button>
-              <button class="btn-danger" (click)="deleteDepartment(dept.id)">Delete</button>
+              <button class="btn-icon" (click)="openModal(dept)" title="Edit">
+                <ng-icon name="lucideEdit2" size="16" />
+              </button>
+              <button class="btn-icon btn-icon-danger" (click)="confirmDelete(dept)" title="Delete">
+                <ng-icon name="lucideTrash2" size="16" />
+              </button>
             </div>
           </div>
         } @empty {
-          <div class="empty-state">
-            <p>No departments yet. Create your first department above.</p>
-          </div>
+          @if (!departmentStore.isLoading()) {
+            <div class="empty-state">
+              <ng-icon name="lucideBuilding2" size="40" />
+              <p>No departments yet</p>
+              <span>Create your first department to get started.</span>
+            </div>
+          }
         }
       </div>
     </div>
+
+    @if (showModal()) {
+      <app-department-form-modal
+        [editDept]="editingDept()"
+        (closed)="closeModal()"
+      />
+    }
+
+    @if (showConfirmDialog()) {
+      <app-confirm-dialog
+        title="Delete Department"
+        [message]="'Are you sure you want to delete \\'' + deletingDept()!.name + '\\'? This action cannot be undone.'"
+        confirmLabel="Delete"
+        (confirmed)="onDeleteConfirmed()"
+        (cancelled)="cancelDelete()"
+      />
+    }
   `,
   styles: [`
     .departments-page { }
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .page-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; }
-    .btn-primary { padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500; }
-    .dept-form { background: white; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .dept-form h3 { margin: 0 0 1rem; font-size: 1rem; }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 0.75rem; }
-    label { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; }
-    input, textarea {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 1rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-primary:hover { background: #2563eb; }
+    .loading-state {
+      text-align: center;
+      padding: 2rem;
+      color: #6b7280;
+    }
+    .error-banner {
+      background: #fef2f2;
+      color: #dc2626;
+      padding: 0.75rem 1rem;
       border-radius: 0.375rem;
       font-size: 0.875rem;
+      margin-bottom: 1rem;
     }
-    textarea { resize: vertical; }
-    .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem; }
-    .btn-cancel { padding: 0.375rem 0.75rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.375rem; cursor: pointer; }
-    .btn-submit { padding: 0.375rem 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; }
-    .btn-submit:disabled { opacity: 0.6; }
     .departments-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .dept-card { background: white; padding: 1rem 1.5rem; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-    .dept-info h3 { margin: 0 0 0.25rem; font-size: 1rem; }
-    .dept-info p { margin: 0; color: #6b7280; font-size: 0.875rem; }
-    .dept-actions { display: flex; gap: 0.75rem; align-items: center; }
-    .link-btn { color: #3b82f6; text-decoration: none; font-size: 0.875rem; }
-    .btn-edit { padding: 0.25rem 0.75rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; }
-    .btn-danger { padding: 0.25rem 0.75rem; color: #dc2626; background: #fff5f5; border: 1px solid #fecaca; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; }
-    .empty-state { text-align: center; padding: 2rem; color: #6b7280; background: white; border-radius: 0.5rem; }
+    .dept-card {
+      background: white;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .dept-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+      color: #374151;
+    }
+    .dept-title h3 { margin: 0; font-size: 1rem; }
+    .dept-desc { margin: 0 0 0.25rem; color: #6b7280; font-size: 0.875rem; }
+    .dept-date { color: #9ca3af; font-size: 0.75rem; }
+    .dept-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .link-btn {
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.875rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+    }
+    .link-btn:hover { background: #eff6ff; }
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.375rem;
+      background: none;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      color: #6b7280;
+    }
+    .btn-icon:hover { background: #f3f4f6; color: #374151; }
+    .btn-icon-danger { color: #dc2626; border-color: #fecaca; }
+    .btn-icon-danger:hover { background: #fef2f2; color: #dc2626; }
+    .empty-state {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: #6b7280;
+      background: white;
+      border-radius: 0.5rem;
+    }
+    .empty-state ng-icon { margin-bottom: 0.75rem; }
+    .empty-state p { margin: 0 0 0.25rem; font-weight: 500; font-size: 1rem; color: #374151; }
+    .empty-state span { font-size: 0.875rem; }
   `],
 })
-export class DepartmentsPageComponent {
+export class DepartmentsPageComponent implements OnInit {
   protected departmentStore = inject(DepartmentStore);
-  private fb = inject(FormBuilder);
+  private departmentService = inject(DepartmentService);
 
-  protected showForm = signal(false);
-  protected editDept = signal<IDepartment | null>(null);
+  protected showModal = signal(false);
+  protected editingDept = signal<IDepartment | null>(null);
 
-  protected form = this.fb.group({
-    name: ['', [Validators.required]],
-    description: [''],
-  });
+  protected showConfirmDialog = signal(false);
+  protected deletingDept = signal<IDepartment | null>(null);
 
-  openForm(): void {
-    this.editDept.set(null);
-    this.form.reset({ name: '', description: '' });
-    this.showForm.set(true);
+  ngOnInit(): void {
+    this.departmentService.loadDepartments();
   }
 
-  startEdit(dept: IDepartment): void {
-    this.editDept.set(dept);
-    this.form.patchValue({ name: dept.name, description: dept.description ?? '' });
-    this.showForm.set(true);
+  openModal(dept?: IDepartment): void {
+    this.editingDept.set(dept ?? null);
+    this.showModal.set(true);
   }
 
-  cancelForm(): void {
-    this.showForm.set(false);
-    this.editDept.set(null);
-    this.form.reset();
+  closeModal(): void {
+    this.showModal.set(false);
+    this.editingDept.set(null);
   }
 
-  onSubmit(): void {
-    if (this.form.invalid) return;
-    // HTTP call wired when DepartmentService is implemented
-    this.cancelForm();
+  confirmDelete(dept: IDepartment): void {
+    this.deletingDept.set(dept);
+    this.showConfirmDialog.set(true);
   }
 
-  deleteDepartment(id: string): void {
-    if (confirm('Delete this department? This action cannot be undone.')) {
-      this.departmentStore.removeDepartment(id);
+  cancelDelete(): void {
+    this.showConfirmDialog.set(false);
+    this.deletingDept.set(null);
+  }
+
+  async onDeleteConfirmed(): Promise<void> {
+    const dept = this.deletingDept();
+    if (!dept) return;
+
+    this.showConfirmDialog.set(false);
+    this.deletingDept.set(null);
+
+    try {
+      await this.departmentService.deleteDepartment(dept.id);
+    } catch {
+      // Error is displayed via departmentStore.error()
     }
   }
 }
