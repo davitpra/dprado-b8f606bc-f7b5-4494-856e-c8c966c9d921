@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
+import { AccessControlModule } from './access-control/access-control.module';
 import { JwtAuthGuard } from '@task-management/auth';
 import { envValidationSchema } from './config/env.validation';
 
@@ -24,6 +25,7 @@ import { envValidationSchema } from './config/env.validation';
     }),
     DatabaseModule,
     AuthModule,
+    AccessControlModule,
   ],
   controllers: [AppController],
   providers: [
