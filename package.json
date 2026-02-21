@@ -2,7 +2,9 @@
   "name": "@org/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "seed": "npx tsx --tsconfig apps/api/tsconfig.app.json apps/api/src/scripts/seed.ts"
+  },
   "private": true,
   "devDependencies": {
     "@angular-devkit/core": "~21.1.0",

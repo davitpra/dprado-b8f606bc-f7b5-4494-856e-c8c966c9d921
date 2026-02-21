@@ -59,6 +59,9 @@ npx nx lint dashboard
 # Run affected only (CI)
 npx nx affected -t test
 npx nx affected -t lint
+
+# Seed database (idempotent — safe to re-run)
+npm run seed
 ```
 
 Swagger UI is available at `http://localhost:3000/api/docs` when the API is running.
