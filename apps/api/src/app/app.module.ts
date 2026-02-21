@@ -11,6 +11,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { DepartmentMembersModule } from './department-members/department-members.module';
 import { TasksModule } from './tasks/tasks.module';
+import { AuditModule } from './audit/audit.module';
 import { JwtAuthGuard } from '@task-management/auth';
 import { envValidationSchema } from './config/env.validation';
 
@@ -34,6 +35,7 @@ import { envValidationSchema } from './config/env.validation';
     DepartmentsModule,
     DepartmentMembersModule,
     TasksModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [
