@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './auth/auth.module';
 import { AccessControlModule } from './access-control/access-control.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { DepartmentsModule } from './departments/departments.module';
 import { JwtAuthGuard } from '@task-management/auth';
 import { envValidationSchema } from './config/env.validation';
 
@@ -28,6 +29,7 @@ import { envValidationSchema } from './config/env.validation';
     AuthModule,
     AccessControlModule,
     OrganizationsModule,
+    DepartmentsModule,
   ],
   controllers: [AppController],
   providers: [
