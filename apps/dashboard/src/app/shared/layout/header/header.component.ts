@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideMenu,
@@ -25,6 +25,19 @@ export class HeaderComponent {
   protected departmentStore = inject(DepartmentStore);
   protected orgStore = inject(OrganizationStore);
   private authService = inject(AuthService);
+
+  protected accessibleDepartments = computed(() => {
+    const departments = this.departmentStore.departments();
+    if (this.authStore.isOwner()) return departments;
+    const roleDeptIds = new Set(
+      this.authStore.userRoles()
+        .filter(r => r.departmentId)
+        .map(r => r.departmentId!),
+    );
+    return departments.filter(d => roleDeptIds.has(d.id));
+  });
+
+  protected showAllOption = computed(() => this.authStore.isOwner());
 
   toggleTheme(): void {
     this.uiStore.toggleTheme();

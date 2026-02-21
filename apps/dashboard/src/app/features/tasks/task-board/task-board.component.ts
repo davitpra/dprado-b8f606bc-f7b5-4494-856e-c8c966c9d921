@@ -5,6 +5,7 @@ import { TaskStore } from '../../../core/stores/task.store';
 import { AuthStore } from '../../../core/stores/auth.store';
 import { UIStore } from '../../../core/stores/ui.store';
 import { DepartmentStore } from '../../../core/stores/department.store';
+import { TaskService } from '../../../core/services/task.service';
 import { TaskCardComponent } from '../task-card/task-card.component';
 import { TaskModalComponent } from '../task-modal/task-modal.component';
 import { TaskFiltersComponent } from '../task-filters/task-filters.component';
@@ -46,7 +47,7 @@ import { TaskListComponent } from '../task-list/task-list.component';
               >
                 @for (task of taskStore.tasksByStatus()[col.status]; track task.id) {
                   <div cdkDrag [cdkDragData]="task" [cdkDragDisabled]="!canDragDrop()">
-                    <app-task-card [task]="task" />
+                    <app-task-card [task]="task" (edit)="openModal($event)" (delete)="onDeleteTask($event)" />
                     <div *cdkDragPlaceholder class="bg-indigo-100 dark:bg-indigo-900/30 border-2 border-dashed border-indigo-400 rounded-lg h-[60px] mb-2"></div>
                   </div>
                 }
@@ -59,7 +60,7 @@ import { TaskListComponent } from '../task-list/task-list.component';
       }
 
       @if (showModal()) {
-        <app-task-modal [editTask]="editingTask()" (closed)="closeModal()" />
+        <app-task-modal [editTask]="editingTask()" (closed)="closeModal()" (saved)="onSave($event)" />
       }
     </div>
   `,
@@ -69,6 +70,7 @@ export class TaskBoardComponent {
   protected authStore = inject(AuthStore);
   protected uiStore = inject(UIStore);
   private departmentStore = inject(DepartmentStore);
+  private taskService = inject(TaskService);
 
   protected showModal = signal(false);
   protected editingTask = signal<ITask | null>(null);
@@ -103,7 +105,28 @@ export class TaskBoardComponent {
     this.editingTask.set(null);
   }
 
-  onDrop(event: CdkDragDrop<ITask[]>): void {
+  async onSave(values: Record<string, unknown>): Promise<void> {
+    const editing = this.editingTask();
+    try {
+      if (editing) {
+        await this.taskService.updateTask(editing.id, values);
+      } else {
+        const deptId = this.departmentStore.currentDepartmentId();
+        if (deptId) {
+          await this.taskService.createTask({ ...values, departmentId: deptId } as Partial<ITask>);
+        }
+      }
+      this.closeModal();
+    } catch {
+      // Error is set in TaskStore by TaskService
+    }
+  }
+
+  async onDeleteTask(task: ITask): Promise<void> {
+    await this.taskService.deleteTask(task.id);
+  }
+
+  async onDrop(event: CdkDragDrop<ITask[]>): Promise<void> {
     if (!this.canDragDrop()) return;
 
     if (event.previousContainer === event.container) {
@@ -111,10 +134,17 @@ export class TaskBoardComponent {
       moveItemInArray(items, event.previousIndex, event.currentIndex);
       const updated = items.map((t, i) => ({ ...t, position: i }));
       this.taskStore.reorderTasks(updated);
+      // Persist each reorder
+      for (const t of updated) {
+        this.taskService.reorderTask(t.id, { status: t.status, position: t.position });
+      }
     } else {
       const newStatus = event.container.id as TaskStatus;
       const task = event.item.data as ITask;
-      this.taskStore.updateTask({ ...task, status: newStatus });
+      const newPosition = event.currentIndex;
+      // Optimistic update
+      this.taskStore.updateTask({ ...task, status: newStatus, position: newPosition });
+      await this.taskService.reorderTask(task.id, { status: newStatus, position: newPosition });
     }
   }
 }

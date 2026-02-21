@@ -81,6 +81,7 @@ import { ITask, TaskStatus, TaskCategory, TaskPriority } from '@task-management/
 export class TaskModalComponent implements OnInit {
   editTask = input<ITask | null>(null);
   closed = output<void>();
+  saved = output<Record<string, unknown>>();
 
   private fb = inject(FormBuilder);
 
@@ -113,8 +114,8 @@ export class TaskModalComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid) return;
-    // HTTP call wired when TaskService is implemented
-    this.closed.emit();
+    const values = this.form.getRawValue();
+    this.saved.emit(values);
   }
 
   onClose(): void {

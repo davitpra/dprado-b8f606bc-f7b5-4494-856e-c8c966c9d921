@@ -26,8 +26,10 @@
       (change)="onDepartmentChange($event)"
       aria-label="Select department"
     >
-      <option value="">All Departments</option>
-      @for (dept of departmentStore.departments(); track dept.id) {
+      @if (showAllOption()) {
+        <option value="">All Departments</option>
+      }
+      @for (dept of accessibleDepartments(); track dept.id) {
         <option [value]="dept.id">{{ dept.name }}</option>
       }
     </select>

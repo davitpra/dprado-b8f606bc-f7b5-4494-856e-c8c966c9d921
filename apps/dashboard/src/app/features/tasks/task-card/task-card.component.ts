@@ -1,4 +1,4 @@
-import { Component, inject, input, computed } from '@angular/core';
+import { Component, inject, input, computed, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ITask } from '@task-management/data';
 import { AuthStore } from '../../../core/stores/auth.store';
@@ -43,6 +43,8 @@ import { AuthStore } from '../../../core/stores/auth.store';
 })
 export class TaskCardComponent {
   task = input.required<ITask>();
+  edit = output<ITask>();
+  delete = output<ITask>();
   private authStore = inject(AuthStore);
 
   protected canEdit = computed(() => {
@@ -56,10 +58,10 @@ export class TaskCardComponent {
   });
 
   onEdit(): void {
-    // Handled by parent component via output or store selection
+    this.edit.emit(this.task());
   }
 
   onDelete(): void {
-    // Handled by parent component via output or store selection
+    this.delete.emit(this.task());
   }
 }
