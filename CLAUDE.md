@@ -83,7 +83,8 @@ Swagger UI is available at `http://localhost:3000/api/docs` when the API is runn
 
 | Library | Import path | Contents |
 |---------|-------------|----------|
-| `libs/data` | `@task-management/data` | Interfaces, enums (TaskStatus, TaskPriority, TaskCategory, UserRole), DTOs |
+| `libs/data` | `@task-management/data` | Interfaces, enums (TaskStatus, TaskPriority, TaskCategory, UserRole) |
+| `libs/data` | `@task-management/data/dto` | DTOs with class-validator/Swagger decorators (**API-only**, never import from dashboard) |
 | `libs/auth` | `@task-management/auth` | Guards (JWT, Roles, Permissions), decorators (@CurrentUser, @Public, @Roles, @RequirePermission) |
 
 ### Database
@@ -196,6 +197,28 @@ DELETE /tasks/:id                  (soft delete)
 
 GET    /audit-log
 ```
+
+### Icons (ng-icons + Lucide)
+
+Use `@ng-icons/core` with `@ng-icons/lucide` for all icons in the dashboard. Never use inline SVGs.
+
+```typescript
+// In component .ts
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideEye, lucideEyeOff } from '@ng-icons/lucide';
+
+@Component({
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideEye, lucideEyeOff })],
+})
+```
+
+```html
+<!-- In template -->
+<ng-icon name="lucideEye" size="20" />
+```
+
+Browse available icons at https://lucide.dev/icons
 
 ### Frontend Features
 
