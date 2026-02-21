@@ -8,19 +8,20 @@ import { UIStore } from '../../../core/stores/ui.store';
   standalone: true,
   imports: [],
   template: `
-    <div class="filters-bar">
+    <div class="flex flex-wrap gap-2.5 items-center px-4 py-3 bg-white dark:bg-gray-800 rounded-lg mb-4 shadow-sm">
       <input
         type="search"
         placeholder="Search tasks…"
         [value]="taskStore.filters().search"
         (input)="onSearch($event)"
         aria-label="Search tasks"
-        class="search-input"
+        class="flex-1 min-w-[160px] px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
       />
       <select
         [value]="taskStore.filters().status ?? ''"
         (change)="onStatusChange($event)"
         aria-label="Filter by status"
+        class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
       >
         <option value="">All Statuses</option>
         @for (s of statuses; track s) {
@@ -31,6 +32,7 @@ import { UIStore } from '../../../core/stores/ui.store';
         [value]="taskStore.filters().category ?? ''"
         (change)="onCategoryChange($event)"
         aria-label="Filter by category"
+        class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
       >
         <option value="">All Categories</option>
         @for (c of categories; track c) {
@@ -41,6 +43,7 @@ import { UIStore } from '../../../core/stores/ui.store';
         [value]="taskStore.filters().priority ?? ''"
         (change)="onPriorityChange($event)"
         aria-label="Filter by priority"
+        class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
       >
         <option value="">All Priorities</option>
         @for (p of priorities; track p) {
@@ -48,70 +51,23 @@ import { UIStore } from '../../../core/stores/ui.store';
         }
       </select>
       @if (taskStore.hasActiveFilters()) {
-        <button class="clear-btn" (click)="taskStore.resetFilters()">Clear</button>
+        <button class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-xs cursor-pointer text-gray-500 dark:text-gray-400"
+          (click)="taskStore.resetFilters()">Clear</button>
       }
-      <div class="view-toggle">
+      <div class="ml-auto flex border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
         <button
           (click)="uiStore.setTaskView('kanban')"
-          [class.active]="uiStore.taskView() === 'kanban'"
+          [class]="'px-3 py-1.5 border-none text-xs cursor-pointer ' + (uiStore.taskView() === 'kanban' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400')"
           aria-label="Kanban view"
         >Kanban</button>
         <button
           (click)="uiStore.setTaskView('list')"
-          [class.active]="uiStore.taskView() === 'list'"
+          [class]="'px-3 py-1.5 border-none text-xs cursor-pointer ' + (uiStore.taskView() === 'list' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400')"
           aria-label="List view"
         >List</button>
       </div>
     </div>
   `,
-  styles: [`
-    .filters-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.625rem;
-      align-items: center;
-      padding: 0.75rem 1rem;
-      background: white;
-      border-radius: 0.5rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-    .search-input { flex: 1; min-width: 160px; }
-    input, select {
-      padding: 0.4rem 0.625rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-    }
-    .clear-btn {
-      padding: 0.375rem 0.75rem;
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      font-size: 0.75rem;
-      cursor: pointer;
-      color: #6b7280;
-    }
-    .view-toggle {
-      margin-left: auto;
-      display: flex;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      overflow: hidden;
-    }
-    .view-toggle button {
-      padding: 0.375rem 0.75rem;
-      background: white;
-      border: none;
-      font-size: 0.75rem;
-      cursor: pointer;
-      color: #6b7280;
-    }
-    .view-toggle button.active {
-      background: #3b82f6;
-      color: white;
-    }
-  `],
 })
 export class TaskFiltersComponent {
   protected taskStore = inject(TaskStore);

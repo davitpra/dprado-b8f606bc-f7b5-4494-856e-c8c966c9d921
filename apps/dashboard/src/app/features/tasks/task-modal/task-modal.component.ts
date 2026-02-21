@@ -7,59 +7,69 @@ import { ITask, TaskStatus, TaskCategory, TaskPriority } from '@task-management/
   standalone: true,
   imports: [ReactiveFormsModule],
   template: `
-    <div class="modal-overlay" (click)="onClose()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h2>{{ editTask() ? 'Edit Task' : 'New Task' }}</h2>
-          <button class="close-btn" (click)="onClose()" aria-label="Close">✕</button>
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]" (click)="onClose()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-[520px] max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+        <div class="flex justify-between items-center mb-5">
+          <h2 class="m-0 text-lg text-gray-900 dark:text-gray-100">{{ editTask() ? 'Edit Task' : 'New Task' }}</h2>
+          <button class="bg-transparent border-none text-base cursor-pointer text-gray-500 dark:text-gray-400" (click)="onClose()" aria-label="Close">&#10005;</button>
         </div>
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label for="title">Title *</label>
-            <input id="title" type="text" formControlName="title" placeholder="Task title" />
+          <div class="flex flex-col mb-4">
+            <label for="title" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Title *</label>
+            <input id="title" type="text" formControlName="title" placeholder="Task title"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500" />
           </div>
-          <div class="form-group">
-            <label for="description">Description</label>
+          <div class="flex flex-col mb-4">
+            <label for="description" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Description</label>
             <textarea
               id="description"
               formControlName="description"
               rows="3"
               placeholder="Optional description"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-y focus:outline-none focus:border-blue-500"
             ></textarea>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="status">Status</label>
-              <select id="status" formControlName="status">
+          <div class="grid grid-cols-3 gap-3">
+            <div class="flex flex-col mb-4">
+              <label for="status" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Status</label>
+              <select id="status" formControlName="status"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500">
                 @for (s of statuses; track s) {
                   <option [value]="s">{{ s }}</option>
                 }
               </select>
             </div>
-            <div class="form-group">
-              <label for="priority">Priority</label>
-              <select id="priority" formControlName="priority">
+            <div class="flex flex-col mb-4">
+              <label for="priority" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Priority</label>
+              <select id="priority" formControlName="priority"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500">
                 @for (p of priorities; track p) {
                   <option [value]="p">{{ p }}</option>
                 }
               </select>
             </div>
-            <div class="form-group">
-              <label for="category">Category</label>
-              <select id="category" formControlName="category">
+            <div class="flex flex-col mb-4">
+              <label for="category" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Category</label>
+              <select id="category" formControlName="category"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500">
                 @for (c of categories; track c) {
                   <option [value]="c">{{ c }}</option>
                 }
               </select>
             </div>
           </div>
-          <div class="form-group">
-            <label for="dueDate">Due Date</label>
-            <input id="dueDate" type="date" formControlName="dueDate" />
+          <div class="flex flex-col mb-4">
+            <label for="dueDate" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Due Date</label>
+            <input id="dueDate" type="date" formControlName="dueDate"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500" />
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn-cancel" (click)="onClose()">Cancel</button>
-            <button type="submit" class="btn-submit" [disabled]="form.invalid">
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button"
+              class="px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer text-gray-700 dark:text-gray-300"
+              (click)="onClose()">Cancel</button>
+            <button type="submit"
+              class="px-4 py-2 bg-blue-500 text-white border-none rounded-md cursor-pointer font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              [disabled]="form.invalid">
               {{ editTask() ? 'Save Changes' : 'Create Task' }}
             </button>
           </div>
@@ -67,75 +77,6 @@ import { ITask, TaskStatus, TaskCategory, TaskPriority } from '@task-management/
       </div>
     </div>
   `,
-  styles: [`
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .modal-content {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      width: 100%;
-      max-width: 520px;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-    }
-    .modal-header h2 { margin: 0; font-size: 1.125rem; }
-    .close-btn { background: none; border: none; font-size: 1rem; cursor: pointer; color: #6b7280; }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 1rem;
-    }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; }
-    label { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #374151; }
-    input, select, textarea {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-    }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #3b82f6;
-    }
-    textarea { resize: vertical; }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
-    }
-    .btn-cancel {
-      padding: 0.5rem 1rem;
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      cursor: pointer;
-    }
-    .btn-submit {
-      padding: 0.5rem 1rem;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-  `],
 })
 export class TaskModalComponent implements OnInit {
   editTask = input<ITask | null>(null);

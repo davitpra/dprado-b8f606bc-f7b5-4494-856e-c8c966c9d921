@@ -8,89 +8,38 @@ import { AuthStore } from '../../../core/stores/auth.store';
   standalone: true,
   imports: [DatePipe],
   template: `
-    <div class="task-card">
-      <div class="card-header">
-        <span class="priority-badge priority-{{ task().priority.toLowerCase() }}">
-          {{ task().priority }}
-        </span>
-        <span class="category-badge">{{ task().category }}</span>
+    <div class="bg-white dark:bg-gray-800 rounded-lg px-4 py-3 shadow-sm mb-2 cursor-grab active:cursor-grabbing">
+      <div class="flex gap-2 mb-2">
+        @switch (task().priority.toLowerCase()) {
+          @case ('high') {
+            <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">{{ task().priority }}</span>
+          }
+          @case ('medium') {
+            <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{{ task().priority }}</span>
+          }
+          @case ('low') {
+            <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{{ task().priority }}</span>
+          }
+        }
+        <span class="text-[0.65rem] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wide bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">{{ task().category }}</span>
       </div>
-      <h3 class="task-title">{{ task().title }}</h3>
+      <h3 class="m-0 mb-1 text-sm font-semibold leading-tight text-gray-900 dark:text-gray-100">{{ task().title }}</h3>
       @if (task().description) {
-        <p class="task-desc">{{ task().description }}</p>
+        <p class="m-0 mb-2 text-xs text-gray-500 dark:text-gray-400 leading-snug line-clamp-2">{{ task().description }}</p>
       }
       @if (task().dueDate) {
-        <div class="due-date">Due: {{ task().dueDate | date:'mediumDate' }}</div>
+        <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Due: {{ task().dueDate | date:'mediumDate' }}</div>
       }
       @if (canEdit()) {
-        <div class="card-actions">
-          <button class="btn-edit" (click)="$event.stopPropagation(); onEdit()">Edit</button>
-          <button class="btn-delete" (click)="$event.stopPropagation(); onDelete()">Delete</button>
+        <div class="flex gap-2 mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <button class="text-xs px-2 py-1 rounded cursor-pointer border bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800"
+            (click)="$event.stopPropagation(); onEdit()">Edit</button>
+          <button class="text-xs px-2 py-1 rounded cursor-pointer border bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+            (click)="$event.stopPropagation(); onDelete()">Delete</button>
         </div>
       }
     </div>
   `,
-  styles: [`
-    .task-card {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      margin-bottom: 0.5rem;
-      cursor: grab;
-    }
-    .task-card:active { cursor: grabbing; }
-    .card-header {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-    .priority-badge, .category-badge {
-      font-size: 0.65rem;
-      padding: 0.125rem 0.5rem;
-      border-radius: 9999px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.025em;
-    }
-    .priority-high { background: #fee2e2; color: #991b1b; }
-    .priority-medium { background: #fef3c7; color: #92400e; }
-    .priority-low { background: #d1fae5; color: #065f46; }
-    .category-badge { background: #e0e7ff; color: #3730a3; }
-    .task-title {
-      margin: 0 0 0.25rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-    .task-desc {
-      margin: 0 0 0.5rem;
-      font-size: 0.75rem;
-      color: #6b7280;
-      line-height: 1.4;
-      overflow: hidden;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-    .due-date { font-size: 0.75rem; color: #9ca3af; margin-bottom: 0.25rem; }
-    .card-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.5rem;
-      padding-top: 0.5rem;
-      border-top: 1px solid #f3f4f6;
-    }
-    .card-actions button {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.25rem;
-      cursor: pointer;
-      border: 1px solid transparent;
-    }
-    .btn-edit { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-    .btn-delete { background: #fff5f5; color: #dc2626; border-color: #fecaca; }
-  `],
 })
 export class TaskCardComponent {
   task = input.required<ITask>();

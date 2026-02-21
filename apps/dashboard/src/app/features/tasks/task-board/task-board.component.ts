@@ -15,23 +15,24 @@ import { TaskListComponent } from '../task-list/task-list.component';
   standalone: true,
   imports: [CdkDropList, CdkDrag, CdkDragPlaceholder, TaskCardComponent, TaskModalComponent, TaskFiltersComponent, TaskListComponent],
   template: `
-    <div class="tasks-page">
-      <div class="page-header">
-        <h1>Tasks</h1>
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="m-0 text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
         @if (canCreateTask()) {
-          <button class="btn-primary" (click)="openModal()">+ New Task</button>
+          <button class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white border-none rounded-md cursor-pointer text-sm font-medium"
+            (click)="openModal()">+ New Task</button>
         }
       </div>
 
       <app-task-filters />
 
       @if (uiStore.taskView() === 'kanban') {
-        <div class="kanban-board">
+        <div class="grid grid-cols-3 gap-4 items-start">
           @for (col of columns; track col.status) {
-            <div class="kanban-column">
-              <div class="column-header">
-                <span class="column-title">{{ col.label }}</span>
-                <span class="task-count">
+            <div class="bg-gray-100 dark:bg-gray-800/50 rounded-lg p-3">
+              <div class="flex justify-between items-center mb-3">
+                <span class="font-semibold text-sm text-gray-700 dark:text-gray-200">{{ col.label }}</span>
+                <span class="bg-white dark:bg-gray-700 rounded-full px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400 font-medium">
                   {{ taskStore.tasksByStatus()[col.status].length }}
                 </span>
               </div>
@@ -41,12 +42,12 @@ import { TaskListComponent } from '../task-list/task-list.component';
                 [cdkDropListData]="taskStore.tasksByStatus()[col.status]"
                 [cdkDropListConnectedTo]="connectedLists"
                 (cdkDropListDropped)="onDrop($event)"
-                class="drop-zone"
+                class="min-h-[80px]"
               >
                 @for (task of taskStore.tasksByStatus()[col.status]; track task.id) {
                   <div cdkDrag [cdkDragData]="task" [cdkDragDisabled]="!canDragDrop()">
                     <app-task-card [task]="task" />
-                    <div *cdkDragPlaceholder class="drag-placeholder"></div>
+                    <div *cdkDragPlaceholder class="bg-indigo-100 dark:bg-indigo-900/30 border-2 border-dashed border-indigo-400 rounded-lg h-[60px] mb-2"></div>
                   </div>
                 }
               </div>
@@ -62,61 +63,6 @@ import { TaskListComponent } from '../task-list/task-list.component';
       }
     </div>
   `,
-  styles: [`
-    .tasks-page { }
-    .page-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-    .page-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; }
-    .btn-primary {
-      padding: 0.5rem 1rem;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 500;
-    }
-    .btn-primary:hover { background: #2563eb; }
-    .kanban-board {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      align-items: start;
-    }
-    .kanban-column {
-      background: #f3f4f6;
-      border-radius: 0.5rem;
-      padding: 0.75rem;
-    }
-    .column-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.75rem;
-    }
-    .column-title { font-weight: 600; font-size: 0.875rem; color: #374151; }
-    .task-count {
-      background: white;
-      border-radius: 9999px;
-      padding: 0.125rem 0.5rem;
-      font-size: 0.75rem;
-      color: #6b7280;
-      font-weight: 500;
-    }
-    .drop-zone { min-height: 80px; }
-    .drag-placeholder {
-      background: #e0e7ff;
-      border: 2px dashed #6366f1;
-      border-radius: 0.5rem;
-      height: 60px;
-      margin-bottom: 0.5rem;
-    }
-  `],
 })
 export class TaskBoardComponent {
   protected taskStore = inject(TaskStore);
