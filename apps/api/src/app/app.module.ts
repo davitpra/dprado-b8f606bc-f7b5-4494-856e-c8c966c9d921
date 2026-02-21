@@ -10,6 +10,7 @@ import { AccessControlModule } from './access-control/access-control.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { DepartmentMembersModule } from './department-members/department-members.module';
+import { TasksModule } from './tasks/tasks.module';
 import { JwtAuthGuard } from '@task-management/auth';
 import { envValidationSchema } from './config/env.validation';
 
@@ -32,6 +33,7 @@ import { envValidationSchema } from './config/env.validation';
     OrganizationsModule,
     DepartmentsModule,
     DepartmentMembersModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [
