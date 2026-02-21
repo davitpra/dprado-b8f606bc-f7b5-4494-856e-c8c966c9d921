@@ -71,6 +71,10 @@ export class DepartmentStore {
     this._state.update((s) => ({ ...s, members }));
   }
 
+  addMember(member: DepartmentMember): void {
+    this._state.update((s) => ({ ...s, members: [...s.members, member] }));
+  }
+
   removeMember(userId: string): void {
     this._state.update((s) => ({
       ...s,

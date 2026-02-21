@@ -11,6 +11,15 @@ import { OrganizationsService } from './organizations.service';
 export class OrganizationsController {
   constructor(private readonly orgsService: OrganizationsService) {}
 
+  /** GET /api/organizations/me/users — returns all users in the current user's organization. */
+  @Get('me/users')
+  @ApiOperation({ summary: 'List all users in the current user\'s organization' })
+  @ApiResponse({ status: 200, description: 'Users returned successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  getMyOrganizationUsers(@CurrentUser() user: User) {
+    return this.orgsService.getUsersForOrg(user.organizationId);
+  }
+
   /** GET /api/organizations/me — returns the current user's organization with departments. */
   @Get('me')
   @ApiOperation({ summary: 'Get the current user\'s organization' })

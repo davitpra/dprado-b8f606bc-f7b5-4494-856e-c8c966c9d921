@@ -1,145 +1,183 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideUserPlus,
+  lucideTrash2,
+  lucideUsers,
+  lucideArrowLeft,
+} from '@ng-icons/lucide';
 import { DepartmentStore } from '../../../core/stores/department.store';
+import { DepartmentService } from '../../../core/services/department.service';
 import { AuthStore } from '../../../core/stores/auth.store';
+import { InviteMemberModalComponent } from '../invite-member-modal/invite-member-modal.component';
+import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+
+interface MemberView {
+  user: { id: string; firstName: string; lastName: string; email: string };
+  role: 'admin' | 'viewer';
+}
 
 @Component({
   selector: 'app-members-page',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [
+    RouterLink,
+    NgIcon,
+    InviteMemberModalComponent,
+    ConfirmDialogComponent,
+  ],
+  providers: [
+    provideIcons({ lucideUserPlus, lucideTrash2, lucideUsers, lucideArrowLeft }),
+  ],
   template: `
-    <div class="members-page">
-      <div class="page-header">
-        <a routerLink="/app/departments" class="back-link">← Departments</a>
-        <h1>Members</h1>
+    <div>
+      <div class="flex flex-wrap items-center gap-4 mb-6">
+        <a routerLink="/app/departments"
+           class="inline-flex items-center gap-1 text-sm text-blue-500 hover:underline whitespace-nowrap">
+          <ng-icon name="lucideArrowLeft" size="16" />
+          Departments
+        </a>
+        <h1 class="m-0 text-2xl font-bold flex-1 text-gray-900 dark:text-gray-100">Members</h1>
         @if (canInvite()) {
-          <button class="btn-primary" (click)="toggleInviteForm()">+ Invite Member</button>
+          <button
+            class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white border-none rounded-md cursor-pointer font-medium"
+            (click)="openInviteModal()">
+            <ng-icon name="lucideUserPlus" size="16" />
+            Invite Member
+          </button>
         }
       </div>
 
-      @if (showInviteForm()) {
-        <div class="invite-form">
-          <h3>Invite Member</h3>
-          <form [formGroup]="form" (ngSubmit)="onInvite()">
-            <div class="form-group">
-              <label for="email">Email *</label>
-              <input id="email" type="email" formControlName="email" placeholder="user@example.com" />
-            </div>
-            <div class="form-group">
-              <label for="role">Role *</label>
-              <select id="role" formControlName="role">
-                <option value="viewer">Viewer</option>
-                @if (authStore.isOwner()) {
-                  <option value="admin">Admin</option>
-                }
-              </select>
-            </div>
-            <div class="form-actions">
-              <button type="button" class="btn-cancel" (click)="toggleInviteForm()">Cancel</button>
-              <button type="submit" class="btn-submit" [disabled]="form.invalid">Invite</button>
-            </div>
-          </form>
+      @if (departmentStore.isLoading() && !departmentStore.members().length) {
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">Loading members...</div>
+      }
+
+      @if (departmentStore.error() && !showInviteModal()) {
+        <div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-md text-sm mb-4">
+          {{ departmentStore.error() }}
         </div>
       }
 
-      <div class="members-list">
+      <div class="flex flex-col gap-3">
         @for (member of departmentStore.members(); track member.user.id) {
-          <div class="member-card">
-            <div class="member-info">
-              <strong>{{ member.user.firstName }} {{ member.user.lastName }}</strong>
-              <span class="email">{{ member.user.email }}</span>
+          <div class="bg-white dark:bg-gray-800 px-6 py-4 rounded-lg flex justify-between items-center shadow-sm">
+            <div class="flex flex-col gap-1">
+              <strong class="text-gray-900 dark:text-gray-100">{{ member.user.firstName }} {{ member.user.lastName }}</strong>
+              <span class="text-sm text-gray-500 dark:text-gray-400">{{ member.user.email }}</span>
             </div>
-            <div class="member-meta">
-              <span class="role-badge role-{{ member.role }}">{{ member.role }}</span>
-              @if (canRemove()) {
-                <button class="btn-danger" (click)="removeMember(member.user.id)">Remove</button>
+            <div class="flex gap-3 items-center">
+              @if (member.role === 'admin') {
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                  {{ member.role }}
+                </span>
+              } @else {
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                  {{ member.role }}
+                </span>
+              }
+              @if (canRemoveMember(member)) {
+                <button
+                  class="inline-flex items-center justify-center p-1.5 bg-transparent border border-red-200 dark:border-red-800 rounded-md cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  (click)="confirmRemove(member)"
+                  title="Remove member">
+                  <ng-icon name="lucideTrash2" size="16" />
+                </button>
               }
             </div>
           </div>
         } @empty {
-          <div class="empty-state">
-            <p>No members in this department yet.</p>
-          </div>
+          @if (!departmentStore.isLoading()) {
+            <div class="text-center py-12 px-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">
+              <ng-icon name="lucideUsers" size="40" class="mb-3" />
+              <p class="m-0 mb-1 font-medium text-base text-gray-700 dark:text-gray-200">No members yet</p>
+              <span class="text-sm">Invite members to this department to get started.</span>
+            </div>
+          }
         }
       </div>
     </div>
+
+    @if (showInviteModal()) {
+      <app-invite-member-modal
+        [departmentId]="deptId"
+        (closed)="closeInviteModal()"
+      />
+    }
+
+    @if (showConfirmDialog()) {
+      <app-confirm-dialog
+        title="Remove Member"
+        [message]="'Remove ' + removingMember()!.user.firstName + ' ' + removingMember()!.user.lastName + ' from this department?'"
+        confirmLabel="Remove"
+        (confirmed)="onRemoveConfirmed()"
+        (cancelled)="cancelRemove()"
+      />
+    }
   `,
-  styles: [`
-    .members-page { }
-    .page-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .page-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; flex: 1; }
-    .back-link { color: #3b82f6; text-decoration: none; font-size: 0.875rem; white-space: nowrap; }
-    .btn-primary { padding: 0.5rem 1rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; font-weight: 500; }
-    .invite-form { background: white; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .invite-form h3 { margin: 0 0 1rem; font-size: 1rem; }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 0.75rem; }
-    label { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; }
-    input, select { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.375rem; font-size: 0.875rem; }
-    .form-actions { display: flex; gap: 0.75rem; justify-content: flex-end; }
-    .btn-cancel { padding: 0.375rem 0.75rem; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 0.375rem; cursor: pointer; }
-    .btn-submit { padding: 0.375rem 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 0.375rem; cursor: pointer; }
-    .btn-submit:disabled { opacity: 0.6; }
-    .members-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .member-card { background: white; padding: 1rem 1.5rem; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-    .member-info { display: flex; flex-direction: column; gap: 0.25rem; }
-    .email { font-size: 0.875rem; color: #6b7280; }
-    .member-meta { display: flex; gap: 0.75rem; align-items: center; }
-    .role-badge { padding: 0.125rem 0.625rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; text-transform: capitalize; }
-    .role-admin { background: #dbeafe; color: #1e40af; }
-    .role-viewer { background: #f3f4f6; color: #374151; }
-    .btn-danger { padding: 0.25rem 0.75rem; color: #dc2626; background: #fff5f5; border: 1px solid #fecaca; border-radius: 0.375rem; cursor: pointer; font-size: 0.875rem; }
-    .empty-state { text-align: center; padding: 2rem; color: #6b7280; background: white; border-radius: 0.5rem; }
-  `],
 })
 export class MembersPageComponent implements OnInit {
   protected departmentStore = inject(DepartmentStore);
   protected authStore = inject(AuthStore);
   private route = inject(ActivatedRoute);
-  private fb = inject(FormBuilder);
+  private departmentService = inject(DepartmentService);
 
-  protected showInviteForm = signal(false);
+  protected deptId = '';
 
-  protected form = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    role: ['viewer', Validators.required],
-  });
+  protected showInviteModal = signal(false);
+  protected showConfirmDialog = signal(false);
+  protected removingMember = signal<MemberView | null>(null);
 
   protected canInvite = computed(() => {
-    const deptId = this.route.snapshot.paramMap.get('id') ?? '';
     if (this.authStore.isOwner()) return true;
-    return this.authStore.isAdminInDepartment(deptId);
-  });
-
-  protected canRemove = computed(() => {
-    const deptId = this.route.snapshot.paramMap.get('id') ?? '';
-    if (this.authStore.isOwner()) return true;
-    return this.authStore.isAdminInDepartment(deptId);
+    return this.authStore.isAdminInDepartment(this.deptId);
   });
 
   ngOnInit(): void {
-    const deptId = this.route.snapshot.paramMap.get('id');
-    if (deptId) {
-      this.departmentStore.setCurrentDepartment(deptId);
+    this.deptId = this.route.snapshot.paramMap.get('id') ?? '';
+    if (this.deptId) {
+      this.departmentStore.setCurrentDepartment(this.deptId);
+      this.departmentService.loadMembers(this.deptId);
     }
   }
 
-  toggleInviteForm(): void {
-    this.showInviteForm.update((v) => !v);
-    if (!this.showInviteForm()) {
-      this.form.reset({ email: '', role: 'viewer' });
+  canRemoveMember(member: MemberView): boolean {
+    if (this.authStore.isOwner()) return true;
+    if (this.authStore.isAdminInDepartment(this.deptId)) {
+      return member.role === 'viewer';
     }
+    return false;
   }
 
-  onInvite(): void {
-    if (this.form.invalid) return;
-    // HTTP call wired when MembersService is implemented
-    this.toggleInviteForm();
+  openInviteModal(): void {
+    this.showInviteModal.set(true);
   }
 
-  removeMember(userId: string): void {
-    if (confirm('Remove this member from the department?')) {
-      this.departmentStore.removeMember(userId);
+  closeInviteModal(): void {
+    this.showInviteModal.set(false);
+  }
+
+  confirmRemove(member: MemberView): void {
+    this.removingMember.set(member);
+    this.showConfirmDialog.set(true);
+  }
+
+  cancelRemove(): void {
+    this.showConfirmDialog.set(false);
+    this.removingMember.set(null);
+  }
+
+  async onRemoveConfirmed(): Promise<void> {
+    const member = this.removingMember();
+    if (!member) return;
+
+    this.showConfirmDialog.set(false);
+    this.removingMember.set(null);
+
+    try {
+      await this.departmentService.removeMember(this.deptId, member.user.id);
+    } catch {
+      // Error is displayed via departmentStore.error()
     }
   }
 }

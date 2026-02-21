@@ -28,52 +28,58 @@ import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-d
     provideIcons({ lucidePlus, lucideEdit2, lucideTrash2, lucideBuilding2 }),
   ],
   template: `
-    <div class="departments-page">
-      <div class="page-header">
-        <h1>Departments</h1>
-        <button class="btn-primary" (click)="openModal()">
+    <div>
+      <div class="flex justify-between items-center mb-6">
+        <h1 class="m-0 text-2xl font-bold text-gray-900 dark:text-gray-100">Departments</h1>
+        <button class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white border-none rounded-md cursor-pointer font-medium"
+          (click)="openModal()">
           <ng-icon name="lucidePlus" size="16" />
           New Department
         </button>
       </div>
 
       @if (departmentStore.isLoading() && !departmentStore.departments().length) {
-        <div class="loading-state">Loading departments...</div>
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">Loading departments...</div>
       }
 
       @if (departmentStore.error() && !showModal()) {
-        <div class="error-banner">{{ departmentStore.error() }}</div>
+        <div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-md text-sm mb-4">
+          {{ departmentStore.error() }}
+        </div>
       }
 
-      <div class="departments-list">
+      <div class="flex flex-col gap-3">
         @for (dept of departmentStore.departments(); track dept.id) {
-          <div class="dept-card">
-            <div class="dept-info">
-              <div class="dept-title">
+          <div class="bg-white dark:bg-gray-800 px-6 py-4 rounded-lg flex justify-between items-center shadow-sm">
+            <div>
+              <div class="flex items-center gap-2 mb-1 text-gray-700 dark:text-gray-200">
                 <ng-icon name="lucideBuilding2" size="18" />
-                <h3>{{ dept.name }}</h3>
+                <h3 class="m-0 text-base">{{ dept.name }}</h3>
               </div>
               @if (dept.description) {
-                <p class="dept-desc">{{ dept.description }}</p>
+                <p class="m-0 mb-1 text-gray-500 dark:text-gray-400 text-sm">{{ dept.description }}</p>
               }
-              <span class="dept-date">Created {{ dept.createdAt | date:'mediumDate' }}</span>
+              <span class="text-gray-400 dark:text-gray-500 text-xs">Created {{ dept.createdAt | date:'mediumDate' }}</span>
             </div>
-            <div class="dept-actions">
-              <a [routerLink]="['/app/departments', dept.id, 'members']" class="link-btn">Members</a>
-              <button class="btn-icon" (click)="openModal(dept)" title="Edit">
+            <div class="flex gap-2 items-center">
+              <a [routerLink]="['/app/departments', dept.id, 'members']"
+                 class="text-blue-500 no-underline text-sm px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20">Members</a>
+              <button class="inline-flex items-center justify-center p-1.5 bg-transparent border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
+                (click)="openModal(dept)" title="Edit">
                 <ng-icon name="lucideEdit2" size="16" />
               </button>
-              <button class="btn-icon btn-icon-danger" (click)="confirmDelete(dept)" title="Delete">
+              <button class="inline-flex items-center justify-center p-1.5 bg-transparent border border-red-200 dark:border-red-800 rounded-md cursor-pointer text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                (click)="confirmDelete(dept)" title="Delete">
                 <ng-icon name="lucideTrash2" size="16" />
               </button>
             </div>
           </div>
         } @empty {
           @if (!departmentStore.isLoading()) {
-            <div class="empty-state">
-              <ng-icon name="lucideBuilding2" size="40" />
-              <p>No departments yet</p>
-              <span>Create your first department to get started.</span>
+            <div class="text-center py-12 px-8 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">
+              <ng-icon name="lucideBuilding2" size="40" class="mb-3" />
+              <p class="m-0 mb-1 font-medium text-base text-gray-700 dark:text-gray-200">No departments yet</p>
+              <span class="text-sm">Create your first department to get started.</span>
             </div>
           }
         }
@@ -97,90 +103,6 @@ import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-d
       />
     }
   `,
-  styles: [`
-    .departments-page { }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-    .page-header h1 { margin: 0; font-size: 1.5rem; font-weight: 700; }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      padding: 0.5rem 1rem;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-primary:hover { background: #2563eb; }
-    .loading-state {
-      text-align: center;
-      padding: 2rem;
-      color: #6b7280;
-    }
-    .error-banner {
-      background: #fef2f2;
-      color: #dc2626;
-      padding: 0.75rem 1rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      margin-bottom: 1rem;
-    }
-    .departments-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .dept-card {
-      background: white;
-      padding: 1rem 1.5rem;
-      border-radius: 0.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-    .dept-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.25rem;
-      color: #374151;
-    }
-    .dept-title h3 { margin: 0; font-size: 1rem; }
-    .dept-desc { margin: 0 0 0.25rem; color: #6b7280; font-size: 0.875rem; }
-    .dept-date { color: #9ca3af; font-size: 0.75rem; }
-    .dept-actions { display: flex; gap: 0.5rem; align-items: center; }
-    .link-btn {
-      color: #3b82f6;
-      text-decoration: none;
-      font-size: 0.875rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 0.375rem;
-    }
-    .link-btn:hover { background: #eff6ff; }
-    .btn-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.375rem;
-      background: none;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      color: #6b7280;
-    }
-    .btn-icon:hover { background: #f3f4f6; color: #374151; }
-    .btn-icon-danger { color: #dc2626; border-color: #fecaca; }
-    .btn-icon-danger:hover { background: #fef2f2; color: #dc2626; }
-    .empty-state {
-      text-align: center;
-      padding: 3rem 2rem;
-      color: #6b7280;
-      background: white;
-      border-radius: 0.5rem;
-    }
-    .empty-state ng-icon { margin-bottom: 0.75rem; }
-    .empty-state p { margin: 0 0 0.25rem; font-weight: 500; font-size: 1rem; color: #374151; }
-    .empty-state span { font-size: 0.875rem; }
-  `],
 })
 export class DepartmentsPageComponent implements OnInit {
   protected departmentStore = inject(DepartmentStore);

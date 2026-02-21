@@ -9,38 +9,42 @@ import { DepartmentStore } from '../../../core/stores/department.store';
   standalone: true,
   imports: [ReactiveFormsModule],
   template: `
-    <div class="modal-overlay" (click)="onClose()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <div class="modal-header">
-          <h2>{{ editDept() ? 'Edit Department' : 'New Department' }}</h2>
-          <button class="close-btn" (click)="onClose()" aria-label="Close">&#10005;</button>
+    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]" (click)="onClose()">
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-[480px]" (click)="$event.stopPropagation()">
+        <div class="flex justify-between items-center mb-5">
+          <h2 class="m-0 text-lg text-gray-900 dark:text-gray-100">{{ editDept() ? 'Edit Department' : 'New Department' }}</h2>
+          <button class="bg-transparent border-none text-base cursor-pointer text-gray-500 dark:text-gray-400" (click)="onClose()" aria-label="Close">&#10005;</button>
         </div>
 
         @if (departmentStore.error()) {
-          <div class="error-banner">{{ departmentStore.error() }}</div>
+          <div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 rounded-md text-sm mb-4">
+            {{ departmentStore.error() }}
+          </div>
         }
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
-          <div class="form-group">
-            <label for="dept-name">Name *</label>
-            <input id="dept-name" type="text" formControlName="name" placeholder="Department name" />
+          <div class="flex flex-col mb-4">
+            <label for="dept-name" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Name *</label>
+            <input id="dept-name" type="text" formControlName="name" placeholder="Department name"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500" />
           </div>
-          <div class="form-group">
-            <label for="dept-desc">Description</label>
+          <div class="flex flex-col mb-4">
+            <label for="dept-desc" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Description</label>
             <textarea
               id="dept-desc"
               formControlName="description"
               rows="3"
               placeholder="Optional description"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 resize-y focus:outline-none focus:border-blue-500"
             ></textarea>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn-cancel" (click)="onClose()">Cancel</button>
-            <button
-              type="submit"
-              class="btn-submit"
-              [disabled]="form.invalid || departmentStore.isLoading()"
-            >
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button"
+              class="px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer text-gray-700 dark:text-gray-300"
+              (click)="onClose()">Cancel</button>
+            <button type="submit"
+              class="px-4 py-2 bg-blue-500 text-white border-none rounded-md cursor-pointer font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              [disabled]="form.invalid || departmentStore.isLoading()">
               {{ editDept() ? 'Save Changes' : 'Create' }}
             </button>
           </div>
@@ -48,80 +52,6 @@ import { DepartmentStore } from '../../../core/stores/department.store';
       </div>
     </div>
   `,
-  styles: [`
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-    }
-    .modal-content {
-      background: white;
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      width: 100%;
-      max-width: 480px;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem;
-    }
-    .modal-header h2 { margin: 0; font-size: 1.125rem; }
-    .close-btn { background: none; border: none; font-size: 1rem; cursor: pointer; color: #6b7280; }
-    .error-banner {
-      background: #fef2f2;
-      color: #dc2626;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      margin-bottom: 1rem;
-    }
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      margin-bottom: 1rem;
-    }
-    label { font-size: 0.875rem; font-weight: 500; margin-bottom: 0.25rem; color: #374151; }
-    input, textarea {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-    }
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: #3b82f6;
-    }
-    textarea { resize: vertical; }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
-    }
-    .btn-cancel {
-      padding: 0.5rem 1rem;
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      cursor: pointer;
-    }
-    .btn-submit {
-      padding: 0.5rem 1rem;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 0.375rem;
-      cursor: pointer;
-      font-weight: 500;
-    }
-    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
-  `],
 })
 export class DepartmentFormModalComponent implements OnInit {
   editDept = input<IDepartment | null>(null);

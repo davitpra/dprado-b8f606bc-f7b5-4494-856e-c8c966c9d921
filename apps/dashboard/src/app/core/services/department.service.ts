@@ -1,8 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { IDepartment } from '@task-management/data';
+import { IDepartment, IUser, UserRole } from '@task-management/data';
 import { DepartmentStore } from '../stores/department.store';
+
+interface UserRoleResponse {
+  id: string;
+  userId: string;
+  role: UserRole;
+  departmentId: string;
+  user: IUser;
+}
 
 @Injectable({ providedIn: 'root' })
 export class DepartmentService {
@@ -86,6 +94,76 @@ export class DepartmentService {
     } finally {
       this.departmentStore.setLoading(false);
     }
+  }
+
+  async loadMembers(departmentId: string): Promise<void> {
+    this.departmentStore.setLoading(true);
+    this.departmentStore.setError(null);
+
+    try {
+      const roles = await firstValueFrom(
+        this.http.get<UserRoleResponse[]>(`/api/departments/${departmentId}/members`),
+      );
+      const members = roles.map((ur) => ({
+        user: ur.user,
+        role: ur.role.toLowerCase() as 'admin' | 'viewer',
+      }));
+      this.departmentStore.setMembers(members);
+    } catch (err: unknown) {
+      const message = this.extractError(err, 'Failed to load members');
+      this.departmentStore.setError(message);
+    } finally {
+      this.departmentStore.setLoading(false);
+    }
+  }
+
+  async inviteMember(
+    departmentId: string,
+    data: { userId: string; role: string },
+  ): Promise<void> {
+    this.departmentStore.setLoading(true);
+    this.departmentStore.setError(null);
+
+    try {
+      const ur = await firstValueFrom(
+        this.http.post<UserRoleResponse>(`/api/departments/${departmentId}/members`, data),
+      );
+      this.departmentStore.addMember({
+        user: ur.user,
+        role: ur.role.toLowerCase() as 'admin' | 'viewer',
+      });
+    } catch (err: unknown) {
+      const message = this.extractError(err, 'Failed to invite member');
+      this.departmentStore.setError(message);
+      throw err;
+    } finally {
+      this.departmentStore.setLoading(false);
+    }
+  }
+
+  async removeMember(departmentId: string, userId: string): Promise<void> {
+    this.departmentStore.setLoading(true);
+    this.departmentStore.setError(null);
+
+    try {
+      await firstValueFrom(
+        this.http.delete(`/api/departments/${departmentId}/members/${userId}`),
+      );
+      this.departmentStore.removeMember(userId);
+    } catch (err: unknown) {
+      const message = this.extractError(err, 'Failed to remove member');
+      this.departmentStore.setError(message);
+      throw err;
+    } finally {
+      this.departmentStore.setLoading(false);
+    }
+  }
+
+  async loadOrgUsers(): Promise<IUser[]> {
+    const users = await firstValueFrom(
+      this.http.get<IUser[]>('/api/organizations/me/users'),
+    );
+    return users;
   }
 
   private extractError(err: unknown, fallback: string): string {
