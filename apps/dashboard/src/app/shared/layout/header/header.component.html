@@ -1,0 +1,74 @@
+<header
+  class="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800 sm:px-6"
+>
+  <div class="flex items-center gap-3">
+    <!-- Hamburger (mobile only) -->
+    <button
+      class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 lg:hidden"
+      (click)="uiStore.toggleSidebar()"
+      aria-label="Toggle sidebar"
+    >
+      <ng-icon name="lucideMenu" size="20" />
+    </button>
+
+    <!-- Organization name -->
+    @if (orgStore.organization(); as org) {
+      <span class="hidden text-sm font-medium text-gray-700 dark:text-gray-300 sm:inline">
+        {{ org.name }}
+      </span>
+      <span class="hidden text-gray-300 dark:text-gray-600 sm:inline">|</span>
+    }
+
+    <!-- Department selector -->
+    <select
+      class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+      [value]="departmentStore.currentDepartmentId() ?? ''"
+      (change)="onDepartmentChange($event)"
+      aria-label="Select department"
+    >
+      <option value="">All Departments</option>
+      @for (dept of departmentStore.departments(); track dept.id) {
+        <option [value]="dept.id">{{ dept.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="flex items-center gap-2 sm:gap-3">
+    <!-- Role badge -->
+    @if (authStore.displayRole(); as role) {
+      <span
+        class="hidden rounded-full px-2.5 py-0.5 text-xs font-medium sm:inline-block"
+        [class]="roleBadgeClasses(role)"
+      >
+        {{ role }}
+      </span>
+    }
+
+    <!-- User name -->
+    <span class="hidden text-sm text-gray-600 dark:text-gray-400 sm:flex">
+      {{ authStore.currentUserName() }}
+    </span>
+
+    <!-- Theme toggle -->
+    <button
+      class="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+      (click)="toggleTheme()"
+      aria-label="Toggle theme"
+    >
+      @if (uiStore.isDarkMode()) {
+        <ng-icon name="lucideSun" size="18" />
+      } @else {
+        <ng-icon name="lucideMoon" size="18" />
+      }
+    </button>
+
+    <!-- Logout -->
+    <button
+      class="flex items-center gap-1.5 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700"
+      (click)="logout()"
+    >
+      <ng-icon name="lucideLogOut" size="16" />
+      <span class="hidden sm:inline">Logout</span>
+    </button>
+  </div>
+</header>

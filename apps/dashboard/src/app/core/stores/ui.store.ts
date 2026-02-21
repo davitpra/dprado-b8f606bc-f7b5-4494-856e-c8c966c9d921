@@ -44,4 +44,12 @@ export class UIStore {
   toggleSidebar(): void {
     this._state.update((s) => ({ ...s, isSidebarOpen: !s.isSidebarOpen }));
   }
+
+  closeSidebar(): void {
+    this._state.update((s) => ({ ...s, isSidebarOpen: false }));
+  }
+
+  openSidebar(): void {
+    this._state.update((s) => ({ ...s, isSidebarOpen: true }));
+  }
 }

@@ -38,6 +38,14 @@ export class AuthStore {
     return user ? `${user.firstName} ${user.lastName}` : null;
   });
 
+  readonly displayRole = computed<'Owner' | 'Admin' | 'Viewer' | null>(() => {
+    if (this.isOwner()) return 'Owner';
+    const roles = this._state().userRoles;
+    if (roles.some((r) => r.role === UserRole.ADMIN)) return 'Admin';
+    if (roles.some((r) => r.role === UserRole.VIEWER)) return 'Viewer';
+    return null;
+  });
+
   // Actions
   setAuthResponse(user: IUser, roles: IUserRole[], tokens: IAuthResponse): void {
     this._state.update((s) => ({

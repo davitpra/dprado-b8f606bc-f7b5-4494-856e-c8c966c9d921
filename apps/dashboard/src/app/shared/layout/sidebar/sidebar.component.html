@@ -1,0 +1,44 @@
+<nav class="flex h-full flex-col bg-gray-900 px-3 py-4 dark:bg-gray-950">
+  <div class="mb-8 px-3">
+    <h2 class="text-lg font-bold text-gray-50">TaskManager</h2>
+  </div>
+
+  <ul class="space-y-1">
+    <li>
+      <a
+        routerLink="/app/tasks"
+        routerLinkActive="bg-white/12 text-gray-50 font-medium"
+        class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/8 hover:text-gray-50"
+      >
+        <ng-icon name="lucideLayoutDashboard" size="18" />
+        Tasks
+      </a>
+    </li>
+
+    @if (authStore.isOwner()) {
+      <li>
+        <a
+          routerLink="/app/departments"
+          routerLinkActive="bg-white/12 text-gray-50 font-medium"
+          class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/8 hover:text-gray-50"
+        >
+          <ng-icon name="lucideBuilding2" size="18" />
+          Departments
+        </a>
+      </li>
+    }
+
+    @if (canViewAuditLog()) {
+      <li>
+        <a
+          routerLink="/app/audit-log"
+          routerLinkActive="bg-white/12 text-gray-50 font-medium"
+          class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-gray-300 transition-colors hover:bg-white/8 hover:text-gray-50"
+        >
+          <ng-icon name="lucideScrollText" size="18" />
+          Audit Log
+        </a>
+      </li>
+    }
+  </ul>
+</nav>

@@ -1,84 +1,29 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideMenu,
+  lucideSun,
+  lucideMoon,
+  lucideLogOut,
+} from '@ng-icons/lucide';
 import { AuthStore } from '../../../core/stores/auth.store';
 import { UIStore } from '../../../core/stores/ui.store';
 import { DepartmentStore } from '../../../core/stores/department.store';
+import { OrganizationStore } from '../../../core/stores/organization.store';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
-  standalone: true,
-  imports: [],
-  template: `
-    <header class="app-header">
-      <div class="header-left">
-        <select
-          [value]="departmentStore.currentDepartmentId() ?? ''"
-          (change)="onDepartmentChange($event)"
-          aria-label="Select department"
-        >
-          <option value="">All Departments</option>
-          @for (dept of departmentStore.departments(); track dept.id) {
-            <option [value]="dept.id">{{ dept.name }}</option>
-          }
-        </select>
-      </div>
-      <div class="header-right">
-        <span class="username">{{ authStore.currentUserName() }}</span>
-        <button (click)="toggleTheme()" aria-label="Toggle theme" class="icon-btn">
-          {{ uiStore.isDarkMode() ? '☀️' : '🌙' }}
-        </button>
-        <button (click)="logout()" class="logout-btn">Logout</button>
-      </div>
-    </header>
-  `,
-  styles: [`
-    .app-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.75rem 1.5rem;
-      border-bottom: 1px solid #e5e7eb;
-      background: #ffffff;
-      flex-shrink: 0;
-    }
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .username {
-      font-size: 0.875rem;
-      color: #374151;
-    }
-    select {
-      padding: 0.375rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      cursor: pointer;
-    }
-    .icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.125rem;
-      padding: 0.25rem;
-    }
-    .logout-btn {
-      padding: 0.375rem 0.75rem;
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      cursor: pointer;
-    }
-    .logout-btn:hover { background: #e5e7eb; }
-  `],
+  imports: [NgIcon],
+  providers: [provideIcons({ lucideMenu, lucideSun, lucideMoon, lucideLogOut })],
+  templateUrl: './header.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {
   protected authStore = inject(AuthStore);
   protected uiStore = inject(UIStore);
   protected departmentStore = inject(DepartmentStore);
+  protected orgStore = inject(OrganizationStore);
   private authService = inject(AuthService);
 
   toggleTheme(): void {
@@ -92,5 +37,16 @@ export class HeaderComponent {
   onDepartmentChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.departmentStore.setCurrentDepartment(value || null);
+  }
+
+  roleBadgeClasses(role: string): string {
+    switch (role) {
+      case 'Owner':
+        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300';
+      case 'Admin':
+        return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300';
+      default:
+        return 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+    }
   }
 }
