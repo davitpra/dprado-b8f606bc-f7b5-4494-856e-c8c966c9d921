@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from '@task-management/auth';
 
@@ -19,6 +19,9 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user and organization' })
+  @ApiResponse({ status: 201, description: 'User registered successfully' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 409, description: 'Email already exists' })
   register(@Body() dto: RegisterDto): Promise<IAuthResponse> {
     return this.authService.register(dto);
   }
@@ -27,6 +30,8 @@ export class AuthController {
   @Throttle({ default: { ttl: 60_000, limit: 5 } })
   @Post('login')
   @ApiOperation({ summary: 'Authenticate and receive JWT tokens' })
+  @ApiResponse({ status: 201, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   login(@Body() dto: LoginDto): Promise<IAuthResponse> {
     return this.authService.login(dto);
   }
@@ -34,6 +39,8 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @ApiOperation({ summary: 'Refresh access token using a refresh token' })
+  @ApiResponse({ status: 201, description: 'Token refreshed successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   refresh(@Body() dto: RefreshTokenDto): Promise<IAuthResponse> {
     return this.authService.refreshToken(dto.refresh_token);
   }
