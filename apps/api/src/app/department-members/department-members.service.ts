@@ -6,7 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserRole, InviteMemberDto } from '@task-management/data';
+import { UserRole } from '@task-management/data';
+import { InviteMemberDto } from '@task-management/data/dto';
 
 import { User } from '../entities/user.entity';
 import { Department } from '../entities/department.entity';

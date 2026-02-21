@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateDepartmentDto, UpdateDepartmentDto } from '@task-management/data';
+import { CreateDepartmentDto, UpdateDepartmentDto } from '@task-management/data/dto';
 
 import { Department } from '../entities/department.entity';
 import { User } from '../entities/user.entity';

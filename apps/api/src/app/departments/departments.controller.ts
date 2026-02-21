@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@task-management/auth';
-import { CreateDepartmentDto, UpdateDepartmentDto } from '@task-management/data';
+import { CreateDepartmentDto, UpdateDepartmentDto } from '@task-management/data/dto';
 
 import { User } from '../entities/user.entity';
 import { DepartmentsService } from './departments.service';

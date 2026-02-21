@@ -1,14 +1,16 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Throttle } from '@nestjs/throttler';
-import { Public } from '@task-management/auth';
-
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import {
-  IAuthResponse,
-  LoginDto,
-  RefreshTokenDto,
-  RegisterDto,
-} from '@task-management/data';
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { CurrentUser, Public } from '@task-management/auth';
+
+import { IAuthMeResponse, IAuthResponse } from '@task-management/data';
+import { LoginDto, RefreshTokenDto, RegisterDto } from '@task-management/data/dto';
+import { User } from '../entities/user.entity';
 import { AuthService } from './auth.service';
 
 @ApiTags('Auth')
@@ -43,5 +45,30 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   refresh(@Body() dto: RefreshTokenDto): Promise<IAuthResponse> {
     return this.authService.refreshToken(dto.refresh_token);
+  }
+
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current authenticated user profile and roles' })
+  @ApiResponse({ status: 200, description: 'Current user profile with roles' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  me(@CurrentUser() user: User): IAuthMeResponse {
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        organizationId: user.organizationId,
+        isOwner: user.isOwner,
+        createdAt: user.createdAt.toISOString(),
+      },
+      roles: user.roles.map((r) => ({
+        id: r.id,
+        userId: r.userId,
+        role: r.role,
+        departmentId: r.departmentId,
+      })),
+    };
   }
 }

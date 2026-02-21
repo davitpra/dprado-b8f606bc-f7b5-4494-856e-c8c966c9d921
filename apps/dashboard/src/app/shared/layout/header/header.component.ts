@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
 import { AuthStore } from '../../../core/stores/auth.store';
 import { UIStore } from '../../../core/stores/ui.store';
 import { DepartmentStore } from '../../../core/stores/department.store';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -79,15 +79,14 @@ export class HeaderComponent {
   protected authStore = inject(AuthStore);
   protected uiStore = inject(UIStore);
   protected departmentStore = inject(DepartmentStore);
-  private router = inject(Router);
+  private authService = inject(AuthService);
 
   toggleTheme(): void {
     this.uiStore.toggleTheme();
   }
 
   logout(): void {
-    this.authStore.clearAuth();
-    this.router.navigate(['/auth/login']);
+    this.authService.logout();
   }
 
   onDepartmentChange(event: Event): void {

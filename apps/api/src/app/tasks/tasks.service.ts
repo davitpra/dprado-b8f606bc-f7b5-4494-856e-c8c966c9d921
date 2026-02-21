@@ -5,14 +5,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { UserRole } from '@task-management/data';
 import {
   CreateTaskDto,
   UpdateTaskDto,
   ReorderTaskDto,
   TaskFilterDto,
   PaginatedResponseDto,
-  UserRole,
-} from '@task-management/data';
+} from '@task-management/data/dto';
 
 import { Task } from '../entities/task.entity';
 import { Department } from '../entities/department.entity';

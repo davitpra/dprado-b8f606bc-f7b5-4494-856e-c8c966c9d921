@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../../core/stores/auth.store';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -109,29 +110,21 @@ export class LoginComponent {
   protected authStore = inject(AuthStore);
   private router = inject(Router);
   private fb = inject(FormBuilder);
+  private authService = inject(AuthService);
 
   protected form = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required]],
   });
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.form.invalid) return;
-    // TODO: replace with real AuthService call
-    const email = this.form.value.email ?? '';
-    this.authStore.setAuthResponse(
-      {
-        id: 'dev-user-1',
-        email,
-        firstName: 'Dev',
-        lastName: 'User',
-        organizationId: 'org-1',
-        isOwner: true,
-        createdAt: new Date().toISOString(),
-      },
-      [],
-      { access_token: 'dev-token', refresh_token: 'dev-refresh' },
-    );
-    this.router.navigate(['/app/tasks']);
+    const { email, password } = this.form.value;
+    try {
+      await this.authService.login(email!, password!);
+      this.router.navigate(['/app/tasks']);
+    } catch {
+      // error already set in store by AuthService
+    }
   }
 }

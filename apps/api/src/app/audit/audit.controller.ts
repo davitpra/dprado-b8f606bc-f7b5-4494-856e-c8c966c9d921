@@ -6,7 +6,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { CurrentUser } from '@task-management/auth';
-import { AuditLogFilterDto } from '@task-management/data';
+import { AuditLogFilterDto } from '@task-management/data/dto';
 
 import { User } from '../entities/user.entity';
 import { AuditService } from './audit.service';

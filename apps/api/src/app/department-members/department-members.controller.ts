@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@task-management/auth';
-import { InviteMemberDto } from '@task-management/data';
+import { InviteMemberDto } from '@task-management/data/dto';
 
 import { User } from '../entities/user.entity';
 import { DepartmentMembersService } from './department-members.service';

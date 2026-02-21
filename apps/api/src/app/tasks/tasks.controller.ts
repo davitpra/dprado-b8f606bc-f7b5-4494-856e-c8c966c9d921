@@ -18,7 +18,7 @@ import {
   UpdateTaskDto,
   ReorderTaskDto,
   TaskFilterDto,
-} from '@task-management/data';
+} from '@task-management/data/dto';
 
 import { User } from '../entities/user.entity';
 import { TasksService } from './tasks.service';

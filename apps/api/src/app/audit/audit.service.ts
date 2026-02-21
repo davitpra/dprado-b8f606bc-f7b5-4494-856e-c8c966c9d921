@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AuditLogFilterDto, PaginatedResponseDto } from '@task-management/data';
+import { AuditLogFilterDto, PaginatedResponseDto } from '@task-management/data/dto';
 
 import { AuditLog } from '../entities/audit-log.entity';
 import { User } from '../entities/user.entity';

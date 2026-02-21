@@ -13,6 +13,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./dto": {
+      "@org/source": "./src/dto.ts",
+      "types": "./dist/dto.d.ts",
+      "import": "./dist/dto.js",
+      "default": "./dist/dto.js"
     }
   },
   "dependencies": {

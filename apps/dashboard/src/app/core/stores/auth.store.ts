@@ -74,7 +74,7 @@ export class AuthStore {
   getRoleForDepartment(departmentId: string): UserRole.ADMIN | UserRole.VIEWER | null {
     if (this.isOwner()) return null; // owner bypasses role checks
     const role = this._state().userRoles.find((r) => r.departmentId === departmentId);
-    return role?.role ?? null;
+    return (role?.role as UserRole.ADMIN | UserRole.VIEWER) ?? null;
   }
 
   isAdminInDepartment(departmentId: string): boolean {

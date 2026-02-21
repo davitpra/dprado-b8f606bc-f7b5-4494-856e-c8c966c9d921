@@ -10,7 +10,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import type { StringValue } from 'ms';
 
-import { IAuthResponse, LoginDto, RegisterDto, UserRole } from '@task-management/data';
+import { IAuthResponse, UserRole } from '@task-management/data';
+import { LoginDto, RegisterDto } from '@task-management/data/dto';
 import { User } from '../entities/user.entity';
 import { Organization } from '../entities/organization.entity';
 import { UserRoleEntity } from '../entities/user-role.entity';

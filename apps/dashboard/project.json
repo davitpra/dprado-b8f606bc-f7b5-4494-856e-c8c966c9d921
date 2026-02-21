@@ -19,7 +19,13 @@
             "input": "apps/dashboard/public"
           }
         ],
-        "styles": ["apps/dashboard/src/styles.css"]
+        "styles": ["apps/dashboard/src/styles.css"],
+        "externalDependencies": [
+          "@nestjs/mapped-types",
+          "class-transformer/storage",
+          "class-validator",
+          "class-transformer"
+        ]
       },
       "configurations": {
         "production": {
