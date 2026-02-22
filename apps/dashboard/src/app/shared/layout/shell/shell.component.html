@@ -10,10 +10,12 @@
 
   <!-- Backdrop (mobile only) -->
   @if (uiStore.isSidebarOpen()) {
-    <div
-      class="fixed inset-0 z-30 bg-black/50 lg:hidden"
-      (click)="uiStore.closeSidebar()"
-    ></div>
+  <div
+    class="fixed inset-0 z-30 bg-black/50 lg:hidden"
+    (click)="uiStore.closeSidebar()"
+    (keydown.escape)="uiStore.closeSidebar()"
+    tabindex="-1"
+  ></div>
   }
 
   <!-- Main content -->
