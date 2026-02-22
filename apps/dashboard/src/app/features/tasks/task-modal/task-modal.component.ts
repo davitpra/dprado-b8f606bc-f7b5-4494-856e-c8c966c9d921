@@ -1,4 +1,4 @@
-import { Component, inject, input, output, OnInit, computed } from '@angular/core';
+import { Component, inject, input, output, OnInit, computed, effect } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ITask, TaskStatus, TaskCategory, TaskPriority } from '@task-management/data';
 import { DepartmentStore } from '../../../core/stores/department.store';
@@ -21,6 +21,21 @@ export class TaskModalComponent implements OnInit {
   protected priorities = Object.values(TaskPriority);
   protected categories = Object.values(TaskCategory);
   protected departmentMembers = computed(() => this.departmentStore.members().map((m) => m.user));
+
+  private membersPatchedOnce = false;
+
+  constructor() {
+    effect(() => {
+      const members = this.departmentMembers();
+      if (members.length > 0 && !this.membersPatchedOnce) {
+        this.membersPatchedOnce = true;
+        const task = this.editTask();
+        if (task?.assignedToId) {
+          this.form.patchValue({ assignedToId: task.assignedToId });
+        }
+      }
+    });
+  }
 
   protected form = this.fb.group({
     title: ['', [Validators.required]],

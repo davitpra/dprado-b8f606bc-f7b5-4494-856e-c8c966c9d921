@@ -93,9 +93,9 @@ export class DepartmentMembersService {
         dept.id,
         user,
       );
-      if (role !== UserRole.ADMIN) {
+      if (!role) {
         throw new ForbiddenException(
-          'Only owners and department admins can list members',
+          'Only department members can list members',
         );
       }
     }
