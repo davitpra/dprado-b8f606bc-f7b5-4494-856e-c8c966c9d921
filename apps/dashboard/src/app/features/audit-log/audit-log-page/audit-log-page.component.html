@@ -3,10 +3,74 @@
     <h1 class="m-0 text-2xl font-bold text-gray-900 dark:text-gray-100">Audit Log</h1>
   </div>
 
-  @if (isLoading()) {
-    <div class="text-center p-12 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">Loading audit log…</div>
-  } @else if (auditLogs().length === 0) {
-    <div class="text-center p-12 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg">No audit log entries found.</div>
+  <!-- Filters bar -->
+  <div class="mb-4 flex flex-wrap gap-3 items-end bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+    <div class="flex flex-col gap-1 min-w-[140px]">
+      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</label>
+      <input
+        type="date"
+        class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        [value]="auditLogStore.filters().dateFrom"
+        (change)="onFilterChange({ dateFrom: $any($event.target).value })"
+      />
+    </div>
+    <div class="flex flex-col gap-1 min-w-[140px]">
+      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To</label>
+      <input
+        type="date"
+        class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        [value]="auditLogStore.filters().dateTo"
+        (change)="onFilterChange({ dateTo: $any($event.target).value })"
+      />
+    </div>
+    <div class="flex flex-col gap-1 min-w-[130px]">
+      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</label>
+      <select
+        class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        [value]="auditLogStore.filters().action"
+        (change)="onFilterChange({ action: $any($event.target).value })"
+      >
+        <option value="">All</option>
+        <option value="create">Create</option>
+        <option value="update">Update</option>
+        <option value="delete">Delete</option>
+      </select>
+    </div>
+    <div class="flex flex-col gap-1 min-w-[140px]">
+      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Resource</label>
+      <select
+        class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        [value]="auditLogStore.filters().resource"
+        (change)="onFilterChange({ resource: $any($event.target).value })"
+      >
+        <option value="">All</option>
+        <option value="task">Task</option>
+        <option value="department">Department</option>
+        <option value="member">Member</option>
+      </select>
+    </div>
+    <button
+      class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+      (click)="onClearFilters()"
+      title="Clear filters"
+    >
+      <ng-icon name="lucideX" size="14" />
+      Clear
+    </button>
+  </div>
+
+  @if (auditLogStore.isLoading()) {
+    <div class="text-center p-12 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+      Loading audit log…
+    </div>
+  } @else if (auditLogStore.error()) {
+    <div class="text-center p-12 text-red-500 dark:text-red-400 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+      {{ auditLogStore.error() }}
+    </div>
+  } @else if (auditLogStore.logs().length === 0) {
+    <div class="text-center p-12 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+      No audit log entries found.
+    </div>
   } @else {
     <div class="bg-white dark:bg-gray-800 rounded-lg overflow-x-auto shadow-sm">
       <table class="w-full border-collapse">
@@ -16,23 +80,59 @@
             <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">User</th>
             <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Action</th>
             <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Resource</th>
-            <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">IP Address</th>
+            <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Details</th>
           </tr>
         </thead>
         <tbody>
-          @for (log of auditLogs(); track log.id) {
-            <tr>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-mono text-[0.8rem] text-gray-700 dark:text-gray-300">{{ log.timestamp | date:'medium' }}</td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100">{{ log.userId }}</td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
-                <span class="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 text-[0.7rem] font-semibold uppercase">{{ log.action }}</span>
+          @for (log of auditLogStore.logs(); track log.id) {
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-mono text-[0.8rem] text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                {{ log.timestamp | date:'medium' }}
               </td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">{{ log.resource }}/{{ log.resourceId }}</td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-mono text-[0.8rem] text-gray-500 dark:text-gray-400">{{ log.ipAddress }}</td>
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                {{ getUserDisplay(log) }}
+              </td>
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
+                <span class="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold uppercase {{ getActionBadgeClass(log.action) }}">
+                  {{ log.action }}
+                </span>
+              </td>
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                {{ log.resource }}/{{ log.resourceId }}
+              </td>
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-mono text-[0.75rem] text-gray-500 dark:text-gray-400 max-w-[280px] truncate">
+                {{ formatDetails(log.details) }}
+              </td>
             </tr>
           }
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+      <span>
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ auditLogStore.total() }} entries
+      </span>
+      <div class="flex items-center gap-2">
+        <button
+          class="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          [disabled]="auditLogStore.page() <= 1"
+          (click)="onPageChange(auditLogStore.page() - 1)"
+        >
+          <ng-icon name="lucideChevronLeft" size="16" />
+          Prev
+        </button>
+        <span class="px-2">{{ auditLogStore.page() }} / {{ auditLogStore.totalPages() }}</span>
+        <button
+          class="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          [disabled]="auditLogStore.page() >= auditLogStore.totalPages()"
+          (click)="onPageChange(auditLogStore.page() + 1)"
+        >
+          Next
+          <ng-icon name="lucideChevronRight" size="16" />
+        </button>
+      </div>
     </div>
   }
 </div>

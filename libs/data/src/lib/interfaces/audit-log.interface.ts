@@ -7,4 +7,5 @@ export interface IAuditLog {
   ipAddress: string;
   timestamp: string;
   details: Record<string, unknown>;
+  user?: { id: string; firstName: string; lastName: string; email: string };
 }
