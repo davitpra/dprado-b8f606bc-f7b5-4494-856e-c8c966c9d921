@@ -6,17 +6,20 @@ import { UIStore } from '../../../core/stores/ui.store';
 import { DepartmentService } from '../../../core/services/department.service';
 import { OrganizationService } from '../../../core/services/organization.service';
 import { TaskService } from '../../../core/services/task.service';
+import { KeyboardShortcutsService } from '../../../core/services/keyboard-shortcuts.service';
 import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
+import { ShortcutsHelpComponent } from '../../shortcuts-help/shortcuts-help.component';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent, ShortcutsHelpComponent],
   templateUrl: './shell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShellComponent {
   protected uiStore = inject(UIStore);
+  protected shortcutsService = inject(KeyboardShortcutsService);
   private authStore = inject(AuthStore);
   private departmentStore = inject(DepartmentStore);
   private departmentService = inject(DepartmentService);

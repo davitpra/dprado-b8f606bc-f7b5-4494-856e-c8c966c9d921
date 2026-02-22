@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, effect } from '@angular/core';
+import { Component, inject, computed, signal, effect, untracked } from '@angular/core';
 import { ITask } from '@task-management/data';
 import { TaskStore } from '../../../core/stores/task.store';
 import { AuthStore } from '../../../core/stores/auth.store';
@@ -6,6 +6,7 @@ import { UIStore } from '../../../core/stores/ui.store';
 import { DepartmentStore } from '../../../core/stores/department.store';
 import { DepartmentService } from '../../../core/services/department.service';
 import { TaskService } from '../../../core/services/task.service';
+import { KeyboardShortcutsService } from '../../../core/services/keyboard-shortcuts.service';
 import { TaskKanbanComponent } from '../task-kanban/task-kanban.component';
 import { TaskModalComponent } from '../task-modal/task-modal.component';
 import { TaskFiltersComponent } from '../task-filters/task-filters.component';
@@ -34,6 +35,8 @@ export class TaskDashboardComponent {
   private departmentService = inject(DepartmentService);
   private taskService = inject(TaskService);
 
+  protected shortcutsService = inject(KeyboardShortcutsService);
+
   protected showModal = signal(false);
   protected editingTask = signal<ITask | null>(null);
   protected pendingDeleteTask = signal<ITask | null>(null);
@@ -57,6 +60,30 @@ export class TaskDashboardComponent {
       } else {
         this.departmentService.loadOrgUsers();
       }
+    });
+
+    // N → open new task modal (only when allowed and modal is not already open)
+    effect(() => {
+      const trigger = this.shortcutsService.newTaskTrigger();
+      if (trigger === 0) return;
+      untracked(() => {
+        if (this.canCreateTask() && !this.showModal()) {
+          this.openModal();
+        }
+      });
+    });
+
+    // Esc → close modal or cancel pending delete
+    effect(() => {
+      const trigger = this.shortcutsService.escTrigger();
+      if (trigger === 0) return;
+      untracked(() => {
+        if (this.showModal()) {
+          this.closeModal();
+        } else if (this.pendingDeleteTask()) {
+          this.pendingDeleteTask.set(null);
+        }
+      });
     });
   }
 
