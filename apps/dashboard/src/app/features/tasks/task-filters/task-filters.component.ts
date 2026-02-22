@@ -1,4 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, effect } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { map } from 'rxjs';
 import { TaskStatus, TaskCategory, TaskPriority } from '@task-management/data';
 import { TaskStore } from '../../../core/stores/task.store';
 import { UIStore } from '../../../core/stores/ui.store';
@@ -12,10 +15,24 @@ import { UIStore } from '../../../core/stores/ui.store';
 export class TaskFiltersComponent {
   protected taskStore = inject(TaskStore);
   protected uiStore = inject(UIStore);
+  private breakpointObserver = inject(BreakpointObserver);
 
   protected statuses = Object.values(TaskStatus);
   protected categories = Object.values(TaskCategory);
   protected priorities = Object.values(TaskPriority);
+
+  protected readonly isMobile = toSignal(
+    this.breakpointObserver.observe('(max-width: 767px)').pipe(map((r) => r.matches)),
+    { initialValue: false },
+  );
+
+  constructor() {
+    effect(() => {
+      if (this.isMobile() && this.uiStore.taskView() === 'kanban') {
+        this.uiStore.setTaskView('list');
+      }
+    });
+  }
 
   onSearch(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
