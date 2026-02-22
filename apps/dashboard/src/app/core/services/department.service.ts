@@ -182,6 +182,7 @@ export class DepartmentService {
     const users = await firstValueFrom(
       this.http.get<IUser[]>('/api/organizations/me/users'),
     );
+    this.departmentStore.setOrgUsers(users);
     return users;
   }
 

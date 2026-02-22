@@ -58,7 +58,7 @@ export class TaskListComponent {
 
   getAssignedUser(task: ITask) {
     if (!task.assignedToId) return null;
-    return this.departmentStore.members().find((m) => m.user.id === task.assignedToId)?.user ?? null;
+    return this.departmentStore.allKnownUsers().get(task.assignedToId) ?? null;
   }
 
   canEditTask(task: ITask): boolean {

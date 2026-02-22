@@ -54,6 +54,8 @@ export class TaskDashboardComponent {
       const deptId = this.departmentStore.currentDepartmentId();
       if (deptId) {
         this.departmentService.loadMembers(deptId);
+      } else {
+        this.departmentService.loadOrgUsers();
       }
     });
   }

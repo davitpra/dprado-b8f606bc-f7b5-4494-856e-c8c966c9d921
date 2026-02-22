@@ -24,7 +24,7 @@ export class TaskCardComponent {
   protected assignedUser = computed(() => {
     const assignedId = this.task().assignedToId;
     if (!assignedId) return null;
-    return this.departmentStore.members().find((m) => m.user.id === assignedId)?.user ?? null;
+    return this.departmentStore.allKnownUsers().get(assignedId) ?? null;
   });
 
   protected canEdit = computed(() => {

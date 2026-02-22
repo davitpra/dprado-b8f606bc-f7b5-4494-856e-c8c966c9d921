@@ -10,6 +10,7 @@ interface DepartmentState {
   departments: IDepartment[];
   currentDepartmentId: string | null;
   members: DepartmentMember[];
+  orgUsers: IUser[];
   isLoading: boolean;
   error: string | null;
 }
@@ -20,6 +21,7 @@ export class DepartmentStore {
     departments: [],
     currentDepartmentId: null,
     members: [],
+    orgUsers: [],
     isLoading: false,
     error: null,
   });
@@ -28,8 +30,17 @@ export class DepartmentStore {
   readonly departments = computed(() => this._state().departments);
   readonly currentDepartmentId = computed(() => this._state().currentDepartmentId);
   readonly members = computed(() => this._state().members);
+  readonly orgUsers = computed(() => this._state().orgUsers);
   readonly isLoading = computed(() => this._state().isLoading);
   readonly error = computed(() => this._state().error);
+
+  /** Map of userId → IUser combining current dept members + org-wide users cache. */
+  readonly allKnownUsers = computed(() => {
+    const map = new Map<string, IUser>();
+    for (const u of this._state().orgUsers) map.set(u.id, u);
+    for (const m of this._state().members) map.set(m.user.id, m.user);
+    return map;
+  });
 
   readonly currentDepartment = computed(() => {
     const id = this._state().currentDepartmentId;
@@ -71,6 +82,10 @@ export class DepartmentStore {
     this._state.update((s) => ({ ...s, members }));
   }
 
+  setOrgUsers(users: IUser[]): void {
+    this._state.update((s) => ({ ...s, orgUsers: users }));
+  }
+
   addMember(member: DepartmentMember): void {
     this._state.update((s) => ({ ...s, members: [...s.members, member] }));
   }
@@ -102,6 +117,7 @@ export class DepartmentStore {
       departments: [],
       currentDepartmentId: null,
       members: [],
+      orgUsers: [],
       isLoading: false,
       error: null,
     });
