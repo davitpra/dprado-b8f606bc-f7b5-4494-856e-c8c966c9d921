@@ -27,8 +27,8 @@
               }
             </button>
           </th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Status</th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+          <th class="hidden md:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Status</th>
+          <th class="hidden md:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
             <button
               (click)="sort('priority')"
               class="flex items-center gap-1 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer bg-transparent border-none p-0 font-semibold transition-colors"
@@ -47,8 +47,8 @@
               }
             </button>
           </th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Category</th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+          <th class="hidden lg:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Category</th>
+          <th class="hidden md:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
             <button
               (click)="sort('dueDate')"
               class="flex items-center gap-1 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer bg-transparent border-none p-0 font-semibold transition-colors"
@@ -67,7 +67,7 @@
               }
             </button>
           </th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Assignee</th>
+          <th class="hidden lg:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Assignee</th>
           <th class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700"></th>
         </tr>
       </thead>
@@ -80,8 +80,51 @@
                   class="text-gray-400 dark:text-gray-500 cursor-grab block" />
               }
             </td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-medium text-gray-900 dark:text-gray-100">{{ task.title }}</td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
+
+            <!-- Title cell: full info on mobile, just title on md+ -->
+            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+              <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ task.title }}</span>
+
+              <!-- Mobile-only meta row -->
+              <div class="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                @switch (task.status) {
+                  @case ('TODO') {
+                    <span class="px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">{{ task.status }}</span>
+                  }
+                  @case ('IN_PROGRESS') {
+                    <span class="px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">{{ task.status }}</span>
+                  }
+                  @case ('DONE') {
+                    <span class="px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{{ task.status }}</span>
+                  }
+                }
+                @switch (task.priority) {
+                  @case ('HIGH') {
+                    <span class="px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">{{ task.priority }}</span>
+                  }
+                  @case ('MEDIUM') {
+                    <span class="px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">{{ task.priority }}</span>
+                  }
+                  @case ('LOW') {
+                    <span class="px-1.5 py-0.5 rounded-full text-[0.65rem] font-semibold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">{{ task.priority }}</span>
+                  }
+                }
+                @if (task.dueDate) {
+                  <span class="flex items-center gap-0.5 text-[0.7rem] text-gray-400 dark:text-gray-500">
+                    <ng-icon name="lucideCalendar" size="11" />
+                    {{ task.dueDate | date:'mediumDate' }}
+                  </span>
+                }
+                @if (getAssignedUser(task); as user) {
+                  <span class="flex items-center gap-0.5 text-[0.7rem] text-gray-400 dark:text-gray-500">
+                    <ng-icon name="lucideUser" size="11" />
+                    {{ user.firstName }} {{ user.lastName }}
+                  </span>
+                }
+              </div>
+            </td>
+
+            <td class="hidden md:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
               @switch (task.status) {
                 @case ('TODO') {
                   <span class="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold uppercase bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">{{ task.status }}</span>
@@ -94,7 +137,7 @@
                 }
               }
             </td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
+            <td class="hidden md:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
               @switch (task.priority) {
                 @case ('HIGH') {
                   <span class="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold uppercase bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">{{ task.priority }}</span>
@@ -107,9 +150,9 @@
                 }
               }
             </td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">{{ task.category }}</td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">{{ task.dueDate ? (task.dueDate | date:'mediumDate') : '—' }}</td>
-            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">
+            <td class="hidden lg:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">{{ task.category }}</td>
+            <td class="hidden md:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">{{ task.dueDate ? (task.dueDate | date:'mediumDate') : '—' }}</td>
+            <td class="hidden lg:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">
               @if (getAssignedUser(task); as user) {
                 <span class="flex items-center gap-1.5">
                   <ng-icon name="lucideUser" size="13" class="text-gray-400 dark:text-gray-500 shrink-0" />

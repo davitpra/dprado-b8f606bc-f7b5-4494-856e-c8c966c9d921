@@ -5,7 +5,7 @@
 
   <!-- Filters bar -->
   <div class="mb-4 flex flex-wrap gap-3 items-end bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-    <div class="flex flex-col gap-1 min-w-[140px]">
+    <div class="flex flex-col gap-1 flex-1 min-w-[130px]">
       <label for="dateFrom" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</label>
       <input
         id="dateFrom"
@@ -15,7 +15,7 @@
         (change)="onFilterChange({ dateFrom: $any($event.target).value })"
       />
     </div>
-    <div class="flex flex-col gap-1 min-w-[140px]">
+    <div class="flex flex-col gap-1 flex-1 min-w-[130px]">
       <label for="dateTo" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To</label>
       <input
         id="dateTo"
@@ -25,7 +25,7 @@
         (change)="onFilterChange({ dateTo: $any($event.target).value })"
       />
     </div>
-    <div class="flex flex-col gap-1 min-w-[130px]">
+    <div class="flex flex-col gap-1 flex-1 min-w-[120px]">
       <label for="action" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</label>
       <select
         id="action"
@@ -39,7 +39,7 @@
         <option value="delete">Delete</option>
       </select>
     </div>
-    <div class="flex flex-col gap-1 min-w-[140px]">
+    <div class="flex flex-col gap-1 flex-1 min-w-[120px]">
       <label for="resource" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Resource</label>
       <select
         id="resource"
@@ -54,7 +54,7 @@
       </select>
     </div>
     <button
-      class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+      class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors self-end"
       (click)="onClearFilters()"
       title="Clear filters"
     >
@@ -80,33 +80,53 @@
       <table class="w-full border-collapse">
         <thead>
           <tr>
-            <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Timestamp</th>
-            <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">User</th>
             <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Action</th>
-            <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Resource</th>
-            <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Details</th>
+            <th class="hidden md:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Timestamp</th>
+            <th class="hidden md:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">User</th>
+            <th class="hidden md:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Resource</th>
+            <th class="hidden md:table-cell text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Details</th>
           </tr>
         </thead>
         <tbody>
           @for (log of auditLogStore.logs(); track log.id) {
             <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-mono text-[0.8rem] text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                {{ log.timestamp | date:'medium' }}
-              </td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
-                {{ getUserDisplay(log) }}
-              </td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm">
+
+              <!-- Action cell: badge always visible + mobile sub-info -->
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
                 <span class="px-2 py-0.5 rounded-full text-[0.7rem] font-semibold uppercase {{ getActionBadgeClass(log.action) }}">
                   {{ log.action }}
                 </span>
+                <!-- Mobile-only stacked info -->
+                <div class="mt-2 md:hidden space-y-0.5">
+                  <div class="flex items-center gap-1.5 text-xs text-gray-700 dark:text-gray-200">
+                    <span class="font-medium">{{ getUserDisplay(log) }}</span>
+                    <span class="text-gray-300 dark:text-gray-600">·</span>
+                    <span class="capitalize text-gray-500 dark:text-gray-400">{{ log.resource }}</span>
+                  </div>
+                  <div class="font-mono text-[0.7rem] text-gray-400 dark:text-gray-500">
+                    {{ log.timestamp | date:'medium' }}
+                  </div>
+                  @if (formatDetails(log.details) !== '—') {
+                    <div class="text-[0.7rem] text-gray-500 dark:text-gray-400 truncate max-w-[260px]" [title]="formatDetails(log.details)">
+                      {{ formatDetails(log.details) }}
+                    </div>
+                  }
+                </div>
               </td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap capitalize">
+
+              <td class="hidden md:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-mono text-[0.8rem] text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                {{ log.timestamp | date:'medium' }}
+              </td>
+              <td class="hidden md:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">
+                {{ getUserDisplay(log) }}
+              </td>
+              <td class="hidden md:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap capitalize">
                 {{ log.resource }}
               </td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 max-w-[300px] truncate" [title]="formatDetails(log.details)">
+              <td class="hidden md:table-cell px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 max-w-[300px] truncate" [title]="formatDetails(log.details)">
                 {{ formatDetails(log.details) }}
               </td>
+
             </tr>
           }
         </tbody>
@@ -115,8 +135,11 @@
 
     <!-- Pagination -->
     <div class="mt-4 flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-      <span>
+      <span class="hidden sm:inline">
         Showing {{ rangeStart }}–{{ rangeEnd }} of {{ auditLogStore.total() }} entries
+      </span>
+      <span class="sm:hidden text-xs">
+        {{ auditLogStore.page() }} / {{ auditLogStore.totalPages() }}
       </span>
       <div class="flex items-center gap-2">
         <button
@@ -125,15 +148,15 @@
           (click)="onPageChange(auditLogStore.page() - 1)"
         >
           <ng-icon name="lucideChevronLeft" size="16" />
-          Prev
+          <span class="hidden sm:inline">Prev</span>
         </button>
-        <span class="px-2">{{ auditLogStore.page() }} / {{ auditLogStore.totalPages() }}</span>
+        <span class="hidden sm:inline px-2">{{ auditLogStore.page() }} / {{ auditLogStore.totalPages() }}</span>
         <button
           class="flex items-center gap-1 px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           [disabled]="auditLogStore.page() >= auditLogStore.totalPages()"
           (click)="onPageChange(auditLogStore.page() + 1)"
         >
-          Next
+          <span class="hidden sm:inline">Next</span>
           <ng-icon name="lucideChevronRight" size="16" />
         </button>
       </div>

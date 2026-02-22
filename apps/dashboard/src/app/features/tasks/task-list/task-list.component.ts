@@ -10,7 +10,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import {
   lucideGripVertical, lucidePencil, lucideTrash2, lucideUser,
-  lucideArrowUp, lucideArrowDown, lucideChevronsUpDown,
+  lucideArrowUp, lucideArrowDown, lucideChevronsUpDown, lucideCalendar,
 } from '@ng-icons/lucide';
 import { ITask } from '@task-management/data';
 import { TaskStore } from '../../../core/stores/task.store';
@@ -25,7 +25,7 @@ import { TaskService } from '../../../core/services/task.service';
   providers: [
     provideIcons({
       lucideGripVertical, lucidePencil, lucideTrash2, lucideUser,
-      lucideArrowUp, lucideArrowDown, lucideChevronsUpDown,
+      lucideArrowUp, lucideArrowDown, lucideChevronsUpDown, lucideCalendar,
     }),
   ],
   templateUrl: './task-list.component.html',
