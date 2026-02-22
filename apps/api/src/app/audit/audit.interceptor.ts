@@ -64,6 +64,23 @@ export class AuditInterceptor implements NestInterceptor {
           details.departmentId = req.params.departmentId;
         }
 
+        // Fallback A: extract departmentId from the response entity (covers task update/reorder/delete)
+        if (!details['departmentId'] && responseBody && typeof responseBody === 'object') {
+          const rb = responseBody as Record<string, unknown>;
+          if (rb['departmentId']) {
+            details['departmentId'] = rb['departmentId'];
+          }
+        }
+
+        // Fallback B: for department operations, the dept's own id is its departmentId
+        if (!details['departmentId'] && resource === 'department') {
+          if (req.params?.id) {
+            details['departmentId'] = req.params.id;            // update / delete
+          } else if (responseBody && typeof responseBody === 'object' && 'id' in (responseBody as object)) {
+            details['departmentId'] = (responseBody as Record<string, unknown>)['id']; // create
+          }
+        }
+
         // Include relevant body fields (exclude sensitive data)
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { password, ...safeBody } = req.body || {};

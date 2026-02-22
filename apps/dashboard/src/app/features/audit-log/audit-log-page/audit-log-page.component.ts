@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideChevronRight, lucideX } from '@ng-icons/lucide';
@@ -18,6 +18,10 @@ export class AuditLogPageComponent {
   protected auditLogStore = inject(AuditLogStore);
   private auditLogService = inject(AuditLogService);
   private departmentStore = inject(DepartmentStore);
+
+  private readonly deptNameMap = computed(() =>
+    new Map(this.departmentStore.departments().map((d) => [d.id, d.name]))
+  );
 
   constructor() {
     effect(() => {
@@ -76,9 +80,11 @@ export class AuditLogPageComponent {
         .join(' · ');
     }
 
-    // Fallback: departmentId only
+    // Fallback: departmentId only (resolve to name)
     if (details['departmentId']) {
-      return `dept: ${details['departmentId']}`;
+      const name = this.deptNameMap().get(details['departmentId'] as string)
+        ?? String(details['departmentId']).slice(0, 8);
+      return `dept: ${name}`;
     }
 
     return '—';

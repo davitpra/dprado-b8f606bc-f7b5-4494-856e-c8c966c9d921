@@ -267,7 +267,7 @@ export class TasksService {
     }) as Promise<Task>;
   }
 
-  async remove(user: User, id: string): Promise<void> {
+  async remove(user: User, id: string): Promise<Task> {
     const task = await this.findTaskOrFail(id);
 
     const canModify = await this.acl.canModifyTask(user, task);
@@ -278,6 +278,7 @@ export class TasksService {
     }
 
     await this.taskRepo.softRemove(task);
+    return task;
   }
 
   private async findTaskOrFail(id: string): Promise<Task> {

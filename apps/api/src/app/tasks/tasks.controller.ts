@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   Patch,
   Post,
@@ -99,10 +97,9 @@ export class TasksController {
 
   /** DELETE /api/tasks/:id — soft-delete a task. */
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Soft-delete a task' })
   @ApiParam({ name: 'id', description: 'Task UUID' })
-  @ApiResponse({ status: 204, description: 'Task deleted successfully' })
+  @ApiResponse({ status: 200, description: 'Task deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden — no permission to delete' })
   @ApiResponse({ status: 404, description: 'Task not found' })
