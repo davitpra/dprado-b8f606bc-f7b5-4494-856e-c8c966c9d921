@@ -1,10 +1,11 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronLeft, lucideChevronRight, lucideX } from '@ng-icons/lucide';
 import { IAuditLog } from '@task-management/data';
 import { AuditLogStore } from '../../../core/stores/audit-log.store';
 import { AuditLogService } from '../../../core/services/audit-log.service';
+import { DepartmentStore } from '../../../core/stores/department.store';
 
 @Component({
   selector: 'app-audit-log-page',
@@ -13,26 +14,30 @@ import { AuditLogService } from '../../../core/services/audit-log.service';
   providers: [provideIcons({ lucideChevronLeft, lucideChevronRight, lucideX })],
   templateUrl: './audit-log-page.component.html',
 })
-export class AuditLogPageComponent implements OnInit {
+export class AuditLogPageComponent {
   protected auditLogStore = inject(AuditLogStore);
   private auditLogService = inject(AuditLogService);
+  private departmentStore = inject(DepartmentStore);
 
-  async ngOnInit(): Promise<void> {
-    await this.auditLogService.loadLogs(1);
+  constructor() {
+    effect(() => {
+      const deptId = this.departmentStore.currentDepartmentId();
+      this.auditLogService.loadLogs(1, deptId);
+    });
   }
 
   protected async onFilterChange(partial: Partial<{ dateFrom: string; dateTo: string; action: string; resource: string }>): Promise<void> {
     this.auditLogStore.setFilters(partial);
-    await this.auditLogService.loadLogs(1);
+    await this.auditLogService.loadLogs(1, this.departmentStore.currentDepartmentId());
   }
 
   protected async onClearFilters(): Promise<void> {
     this.auditLogStore.resetFilters();
-    await this.auditLogService.loadLogs(1);
+    await this.auditLogService.loadLogs(1, this.departmentStore.currentDepartmentId());
   }
 
   protected async onPageChange(newPage: number): Promise<void> {
-    await this.auditLogService.loadLogs(newPage);
+    await this.auditLogService.loadLogs(newPage, this.departmentStore.currentDepartmentId());
   }
 
   protected getActionBadgeClass(action: string): string {

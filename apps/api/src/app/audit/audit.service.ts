@@ -62,7 +62,7 @@ export class AuditService {
       });
     } else {
       // Check if user has any admin roles
-      const departments = await this.accessControl.getUserDepartments(user.id);
+      const departments = await this.accessControl.getUserAdminDepartments(user.id);
       if (departments.length === 0) {
         throw new ForbiddenException(
           'You do not have permission to view audit logs',
@@ -99,6 +99,11 @@ export class AuditService {
     if (filters.resource) {
       qb.andWhere('audit_log.resource = :resource', {
         resource: filters.resource,
+      });
+    }
+    if (filters.departmentId) {
+      qb.andWhere('audit_log.details LIKE :deptFilter', {
+        deptFilter: `%"departmentId":"${filters.departmentId}"%`,
       });
     }
 

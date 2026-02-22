@@ -28,6 +28,11 @@ export class AuditLogFilterDto {
   @IsString()
   resource?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by department UUID' })
+  @IsOptional()
+  @IsUUID('4')
+  departmentId?: string;
+
   @ApiPropertyOptional({ example: 1, description: 'Page number (min 1)' })
   @IsOptional()
   @Type(() => Number)

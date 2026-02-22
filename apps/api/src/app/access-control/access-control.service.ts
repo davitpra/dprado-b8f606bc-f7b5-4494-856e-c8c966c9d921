@@ -59,6 +59,17 @@ export class AccessControlService {
       .map((r) => r.department!);
   }
 
+  /** Returns only departments where the user has the ADMIN role (excludes OWNER and VIEWER). */
+  async getUserAdminDepartments(userId: string): Promise<Department[]> {
+    const roles = await this.userRoleRepo.find({
+      where: { userId, role: UserRole.ADMIN },
+      relations: ['department'],
+    });
+    return roles
+      .filter((r) => r.departmentId !== null)
+      .map((r) => r.department!);
+  }
+
   /** Can the user read this task? */
   async canAccessTask(user: User, task: Task): Promise<boolean> {
     if (this.isOwner(user)) return true;

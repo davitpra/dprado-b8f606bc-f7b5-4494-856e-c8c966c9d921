@@ -17,7 +17,7 @@ export class AuditLogService {
   private http = inject(HttpClient);
   private auditLogStore = inject(AuditLogStore);
 
-  async loadLogs(page = 1): Promise<void> {
+  async loadLogs(page = 1, departmentId?: string | null): Promise<void> {
     this.auditLogStore.setLoading(true);
     this.auditLogStore.setError(null);
 
@@ -30,6 +30,7 @@ export class AuditLogService {
       if (dateTo) params = params.set('dateTo', dateTo);
       if (action) params = params.set('action', action);
       if (resource) params = params.set('resource', resource);
+      if (departmentId) params = params.set('departmentId', departmentId);
 
       const response = await firstValueFrom(
         this.http.get<PaginatedResponse<IAuditLog>>('/api/audit-log', { params }),
