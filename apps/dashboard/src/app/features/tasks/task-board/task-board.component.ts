@@ -11,6 +11,7 @@ import { TaskModalComponent } from '../task-modal/task-modal.component';
 import { TaskFiltersComponent } from '../task-filters/task-filters.component';
 import { TaskListComponent } from '../task-list/task-list.component';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
+import { TaskStatsComponent } from '../task-stats/task-stats.component';
 
 @Component({
   selector: 'app-task-dashboard',
@@ -21,6 +22,7 @@ import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-d
     TaskFiltersComponent,
     TaskModalComponent,
     ConfirmDialogComponent,
+    TaskStatsComponent,
   ],
   templateUrl: './task-board.component.html',
 })
