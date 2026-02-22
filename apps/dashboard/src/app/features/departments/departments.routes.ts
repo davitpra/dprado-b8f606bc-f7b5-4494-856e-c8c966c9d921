@@ -14,6 +14,5 @@ export const departmentsRoutes: Route[] = [
     path: ':id/members',
     component: MembersPageComponent,
     canActivate: [departmentAdminGuard],
-    data: { breadcrumb: 'Members' },
   },
 ];

@@ -5,13 +5,12 @@ import { DepartmentStore } from '../../../core/stores/department.store';
 import { UIStore } from '../../../core/stores/ui.store';
 import { DepartmentService } from '../../../core/services/department.service';
 import { TaskService } from '../../../core/services/task.service';
-import { BreadcrumbComponent } from '../breadcrumb/breadcrumb.component';
 import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent, BreadcrumbComponent],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent],
   templateUrl: './shell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

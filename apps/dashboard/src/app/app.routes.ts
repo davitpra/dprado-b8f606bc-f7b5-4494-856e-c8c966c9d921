@@ -20,7 +20,6 @@ export const appRoutes: Route[] = [
       },
       {
         path: 'departments',
-        data: { breadcrumb: 'Departments' },
         loadChildren: () =>
           import('./features/departments/departments.routes').then((m) => m.departmentsRoutes),
       },

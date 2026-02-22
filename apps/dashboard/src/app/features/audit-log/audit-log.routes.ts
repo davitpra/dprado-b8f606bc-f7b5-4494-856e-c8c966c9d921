@@ -7,6 +7,5 @@ export const auditLogRoutes: Route[] = [
     path: '',
     component: AuditLogPageComponent,
     canActivate: [adminOrOwnerGuard],
-    data: { breadcrumb: 'Audit Log' },
   },
 ];
