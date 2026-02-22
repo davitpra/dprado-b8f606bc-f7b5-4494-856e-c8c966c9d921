@@ -19,9 +19,9 @@
       </thead>
       <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
         @for (task of tasks(); track task.id) {
-          <tr cdkDrag [cdkDragDisabled]="!canDragList()" class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+          <tr cdkDrag [cdkDragData]="task" [cdkDragDisabled]="!canDragTask(task)" class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
             <td class="w-8 px-2 py-3 border-b border-gray-100 dark:border-gray-700">
-              @if (canDragList()) {
+              @if (canDragTask(task)) {
                 <ng-icon cdkDragHandle name="lucideGripVertical" size="16"
                   class="text-gray-400 dark:text-gray-500 cursor-grab block" />
               }

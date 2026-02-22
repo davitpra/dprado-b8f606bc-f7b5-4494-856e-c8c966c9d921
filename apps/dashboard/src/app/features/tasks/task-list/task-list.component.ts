@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal, effect, output } from '@angular/core';
+import { Component, inject, signal, effect, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import {
   CdkDropList,
@@ -33,11 +33,13 @@ export class TaskListComponent {
 
   protected tasks = signal<ITask[]>([]);
 
-  protected canDragList = computed(() => {
+  protected canDragTask(task: ITask): boolean {
     if (this.authStore.isOwner()) return true;
     const dept = this.departmentStore.currentDepartment();
-    return dept ? this.authStore.isAdminInDepartment(dept.id) : false;
-  });
+    if (dept && this.authStore.isAdminInDepartment(dept.id)) return true;
+    const user = this.authStore.user();
+    return !!user && (task.createdById === user.id || task.assignedToId === user.id);
+  }
 
   constructor() {
     effect(() => {
@@ -55,18 +57,19 @@ export class TaskListComponent {
     if (!user) return false;
     if (this.authStore.isOwner()) return true;
     if (this.authStore.isAdminInDepartment(task.departmentId)) return true;
-    return task.createdById === user.id; // Viewer: only own tasks
+    return task.createdById === user.id || task.assignedToId === user.id;
   }
 
   onDrop(event: CdkDragDrop<ITask[]>): void {
-    if (!this.canDragList()) return;
+    const draggedTask = event.item.data as ITask;
+    if (!this.canDragTask(draggedTask)) return;
     const localTasks = [...this.tasks()];
     moveItemInArray(localTasks, event.previousIndex, event.currentIndex);
     this.tasks.set(localTasks);
 
     // Update positions for tasks with the same status as the dragged task
-    const draggedTask = localTasks[event.currentIndex];
-    const status = draggedTask.status;
+    const reorderedTask = localTasks[event.currentIndex];
+    const status = reorderedTask.status;
     const sameStatusTasks = localTasks
       .filter((t) => t.status === status)
       .map((t, i) => ({ ...t, position: i }));

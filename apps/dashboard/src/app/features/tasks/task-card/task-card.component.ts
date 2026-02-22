@@ -34,7 +34,7 @@ export class TaskCardComponent {
     const deptId = this.task().departmentId;
     if (this.authStore.isAdminInDepartment(deptId)) return true;
     // Viewer can edit/delete their own tasks
-    return this.task().createdById === user.id;
+    return this.task().createdById === user.id || this.task().assignedToId === user.id;
   });
 
   onEdit(): void {

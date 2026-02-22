@@ -1,4 +1,4 @@
-import { Component, inject, computed, output } from '@angular/core';
+import { Component, inject, output } from '@angular/core';
 import { CdkDragDrop, CdkDropList, CdkDrag, CdkDragPlaceholder, moveItemInArray } from '@angular/cdk/drag-drop';
 import { ITask, TaskStatus } from '@task-management/data';
 import { TaskStore } from '../../../core/stores/task.store';
@@ -30,14 +30,17 @@ export class TaskKanbanComponent {
 
   protected connectedLists = [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE];
 
-  protected canDragDrop = computed(() => {
+  protected canDragTask(task: ITask): boolean {
     if (this.authStore.isOwner()) return true;
     const dept = this.departmentStore.currentDepartment();
-    return dept ? this.authStore.isAdminInDepartment(dept.id) : false;
-  });
+    if (dept && this.authStore.isAdminInDepartment(dept.id)) return true;
+    const user = this.authStore.user();
+    return !!user && (task.createdById === user.id || task.assignedToId === user.id);
+  }
 
   async onDrop(event: CdkDragDrop<ITask[]>): Promise<void> {
-    if (!this.canDragDrop()) return;
+    const draggedTask = event.item.data as ITask;
+    if (!this.canDragTask(draggedTask)) return;
 
     if (event.previousContainer === event.container) {
       const items = [...event.container.data];
@@ -45,7 +48,9 @@ export class TaskKanbanComponent {
       const updated = items.map((t, i) => ({ ...t, position: i }));
       this.taskStore.reorderTasks(updated);
       for (const t of updated) {
-        this.taskService.reorderTask(t.id, { status: t.status, position: t.position });
+        if (this.canDragTask(t)) {
+          this.taskService.reorderTask(t.id, { status: t.status, position: t.position });
+        }
       }
     } else {
       const newStatus = event.container.id as TaskStatus;
