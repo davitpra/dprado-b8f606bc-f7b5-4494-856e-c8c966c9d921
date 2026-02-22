@@ -26,6 +26,16 @@ export class HeaderComponent {
   protected orgStore = inject(OrganizationStore);
   private authService = inject(AuthService);
 
+  protected currentRole = computed<'Owner' | 'Admin' | 'Viewer' | null>(() => {
+    if (this.authStore.isOwner()) return 'Owner';
+    const deptId = this.departmentStore.currentDepartmentId();
+    if (!deptId) return this.authStore.displayRole();
+    const role = this.authStore.getRoleForDepartment(deptId);
+    if (role === 'ADMIN') return 'Admin';
+    if (role === 'VIEWER') return 'Viewer';
+    return null;
+  });
+
   protected accessibleDepartments = computed(() => {
     const departments = this.departmentStore.departments();
     if (this.authStore.isOwner()) return departments;

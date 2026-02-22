@@ -37,7 +37,7 @@
 
   <div class="flex items-center gap-2 sm:gap-3">
     <!-- Role badge -->
-    @if (authStore.displayRole(); as role) {
+    @if (currentRole(); as role) {
       <span
         class="hidden rounded-full px-2.5 py-0.5 text-xs font-medium sm:inline-block"
         [class]="roleBadgeClasses(role)"
