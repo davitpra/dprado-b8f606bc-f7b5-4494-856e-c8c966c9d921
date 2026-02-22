@@ -97,10 +97,10 @@
                   {{ log.action }}
                 </span>
               </td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                {{ log.resource }}/{{ log.resourceId }}
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap capitalize">
+                {{ log.resource }}
               </td>
-              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm font-mono text-[0.75rem] text-gray-500 dark:text-gray-400 max-w-[280px] truncate">
+              <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 max-w-[300px] truncate" [title]="formatDetails(log.details)">
                 {{ formatDetails(log.details) }}
               </td>
             </tr>

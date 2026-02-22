@@ -56,7 +56,27 @@ export class AuditLogPageComponent implements OnInit {
   }
 
   protected formatDetails(details: Record<string, unknown>): string {
-    return JSON.stringify(details);
+    if (!details || Object.keys(details).length === 0) return '—';
+
+    // Access denied: show the original action
+    if (details['originalAction']) {
+      return `denied: ${details['originalAction']}`;
+    }
+
+    // Show body fields as readable key: value pairs
+    const body = details['body'] as Record<string, unknown> | undefined;
+    if (body && Object.keys(body).length > 0) {
+      return Object.entries(body)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(' · ');
+    }
+
+    // Fallback: departmentId only
+    if (details['departmentId']) {
+      return `dept: ${details['departmentId']}`;
+    }
+
+    return '—';
   }
 
   protected get rangeStart(): number {
