@@ -69,7 +69,7 @@ export class TaskListComponent {
     return task.createdById === user.id || task.assignedToId === user.id;
   }
 
-  protected sort(column: 'title' | 'priority' | 'dueDate'): void {
+  protected sort(column: 'title' | 'priority' | 'dueDate' | 'position'): void {
     const current = this.filters();
     if (current.sortBy === column) {
       this.taskStore.setFilters({ sortDirection: current.sortDirection === 'asc' ? 'desc' : 'asc' });

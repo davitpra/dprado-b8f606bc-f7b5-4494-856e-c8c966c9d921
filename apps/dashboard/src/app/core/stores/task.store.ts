@@ -6,7 +6,7 @@ export interface TaskFilters {
   status: TaskStatus | null;
   category: TaskCategory | null;
   priority: TaskPriority | null;
-  sortBy: 'dueDate' | 'priority' | 'title';
+  sortBy: 'dueDate' | 'priority' | 'title' | 'position';
   sortDirection: 'asc' | 'desc';
 }
 
@@ -15,7 +15,7 @@ const DEFAULT_FILTERS: TaskFilters = {
   status: null,
   category: null,
   priority: null,
-  sortBy: 'dueDate',
+  sortBy: 'position',
   sortDirection: 'asc',
 };
 
@@ -77,8 +77,13 @@ export class TaskStore {
         case 'priority':
           return dir * (PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
         case 'dueDate':
-        default:
           return dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        case 'position':
+        default: {
+          const statusOrder: Record<string, number> = { TODO: 0, IN_PROGRESS: 1, DONE: 2 };
+          const sd = (statusOrder[a.status] ?? 0) - (statusOrder[b.status] ?? 0);
+          return sd !== 0 ? sd : dir * (a.position - b.position);
+        }
       }
     });
   });
