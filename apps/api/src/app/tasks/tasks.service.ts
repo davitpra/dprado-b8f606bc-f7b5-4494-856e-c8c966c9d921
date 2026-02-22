@@ -218,6 +218,11 @@ export class TasksService {
     }
 
     Object.assign(task, dto);
+    // Clear the preloaded relation so TypeORM uses the updated FK column
+    // instead of overwriting assignedToId with the stale relation object.
+    if ('assignedToId' in dto) {
+      task.assignedTo = null;
+    }
     await this.taskRepo.save(task);
 
     return this.taskRepo.findOne({

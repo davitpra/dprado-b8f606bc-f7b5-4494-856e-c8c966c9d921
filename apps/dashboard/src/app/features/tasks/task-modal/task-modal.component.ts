@@ -1,6 +1,7 @@
-import { Component, inject, input, output, OnInit } from '@angular/core';
+import { Component, inject, input, output, OnInit, computed } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ITask, TaskStatus, TaskCategory, TaskPriority } from '@task-management/data';
+import { DepartmentStore } from '../../../core/stores/department.store';
 
 @Component({
   selector: 'app-task-modal',
@@ -14,10 +15,12 @@ export class TaskModalComponent implements OnInit {
   saved = output<Record<string, unknown>>();
 
   private fb = inject(FormBuilder);
+  private departmentStore = inject(DepartmentStore);
 
   protected statuses = Object.values(TaskStatus);
   protected priorities = Object.values(TaskPriority);
   protected categories = Object.values(TaskCategory);
+  protected departmentMembers = computed(() => this.departmentStore.members().map((m) => m.user));
 
   protected form = this.fb.group({
     title: ['', [Validators.required]],
@@ -26,6 +29,7 @@ export class TaskModalComponent implements OnInit {
     priority: [TaskPriority.MEDIUM, Validators.required],
     category: [TaskCategory.WORK, Validators.required],
     dueDate: [''],
+    assignedToId: [null as string | null],
   });
 
   ngOnInit(): void {
@@ -38,14 +42,19 @@ export class TaskModalComponent implements OnInit {
         priority: task.priority,
         category: task.category,
         dueDate: task.dueDate ?? '',
+        assignedToId: task.assignedToId ?? null,
       });
     }
   }
 
   onSubmit(): void {
     if (this.form.invalid) return;
-    const { dueDate, ...rest } = this.form.getRawValue();
-    this.saved.emit({ ...rest, ...(dueDate ? { dueDate } : {}) });
+    const { dueDate, assignedToId, ...rest } = this.form.getRawValue();
+    this.saved.emit({
+      ...rest,
+      ...(dueDate ? { dueDate } : {}),
+      ...(assignedToId ? { assignedToId } : {}),
+    });
   }
 
   onClose(): void {
