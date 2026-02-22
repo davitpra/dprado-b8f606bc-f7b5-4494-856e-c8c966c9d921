@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ITask } from '@task-management/data';
 import { TaskStore } from '../stores/task.store';
+import { ToastService } from './toast.service';
 
 interface PaginatedResponse<T> {
   items: T[];
@@ -16,6 +17,7 @@ interface PaginatedResponse<T> {
 export class TaskService {
   private http = inject(HttpClient);
   private taskStore = inject(TaskStore);
+  private toastService = inject(ToastService);
 
   async loadTasks(departmentId?: string | null): Promise<void> {
     this.taskStore.setLoading(true);
@@ -47,10 +49,12 @@ export class TaskService {
         this.http.post<ITask>('/api/tasks', data),
       );
       this.taskStore.addTask(task);
+      this.toastService.success('Task created');
       return task;
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to create task');
       this.taskStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.taskStore.setLoading(false);
@@ -66,10 +70,12 @@ export class TaskService {
         this.http.put<ITask>(`/api/tasks/${id}`, data),
       );
       this.taskStore.updateTask(task);
+      this.toastService.success('Task updated');
       return task;
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to update task');
       this.taskStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.taskStore.setLoading(false);
@@ -85,9 +91,11 @@ export class TaskService {
         this.http.delete(`/api/tasks/${id}`),
       );
       this.taskStore.removeTask(id);
+      this.toastService.success('Task deleted');
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to delete task');
       this.taskStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.taskStore.setLoading(false);
@@ -109,6 +117,7 @@ export class TaskService {
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to reorder task');
       this.taskStore.setError(message);
+      this.toastService.error(message);
       throw err;
     }
   }

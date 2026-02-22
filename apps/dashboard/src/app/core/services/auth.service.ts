@@ -8,6 +8,7 @@ import {
   IAuthResponse,
 } from '@task-management/data';
 import { AuthStore } from '../stores/auth.store';
+import { ToastService } from './toast.service';
 
 const ACCESS_TOKEN_KEY = 'access_token';
 const REFRESH_TOKEN_KEY = 'refresh_token';
@@ -17,6 +18,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private authStore = inject(AuthStore);
+  private toastService = inject(ToastService);
   private initPromise: Promise<boolean> | null = null;
 
   async login(email: string, password: string): Promise<void> {
@@ -42,6 +44,7 @@ export class AuthService {
             'Login failed')
           : 'Login failed';
       this.authStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.authStore.setLoading(false);
@@ -70,6 +73,7 @@ export class AuthService {
           ? ((err as { error: { message?: string } }).error.message ?? 'Registration failed')
           : 'Registration failed';
       this.authStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.authStore.setLoading(false);

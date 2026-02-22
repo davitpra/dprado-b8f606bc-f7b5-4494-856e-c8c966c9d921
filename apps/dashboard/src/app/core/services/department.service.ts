@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { IDepartment, IUser, UserRole } from '@task-management/data';
 import { DepartmentStore } from '../stores/department.store';
+import { ToastService } from './toast.service';
 
 interface UserRoleResponse {
   id: string;
@@ -16,6 +17,7 @@ interface UserRoleResponse {
 export class DepartmentService {
   private http = inject(HttpClient);
   private departmentStore = inject(DepartmentStore);
+  private toastService = inject(ToastService);
 
   async loadDepartments(): Promise<void> {
     this.departmentStore.setLoading(true);
@@ -46,10 +48,12 @@ export class DepartmentService {
         this.http.post<IDepartment>('/api/departments', data),
       );
       this.departmentStore.addDepartment(department);
+      this.toastService.success('Department created');
       return department;
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to create department');
       this.departmentStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.departmentStore.setLoading(false);
@@ -68,10 +72,12 @@ export class DepartmentService {
         this.http.put<IDepartment>(`/api/departments/${id}`, data),
       );
       this.departmentStore.updateDepartment(department);
+      this.toastService.success('Department updated');
       return department;
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to update department');
       this.departmentStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.departmentStore.setLoading(false);
@@ -87,9 +93,11 @@ export class DepartmentService {
         this.http.delete(`/api/departments/${id}`),
       );
       this.departmentStore.removeDepartment(id);
+      this.toastService.success('Department deleted');
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to delete department');
       this.departmentStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.departmentStore.setLoading(false);
@@ -132,9 +140,11 @@ export class DepartmentService {
         user: ur.user,
         role: ur.role.toLowerCase() as 'admin' | 'viewer',
       });
+      this.toastService.success('Member invited');
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to invite member');
       this.departmentStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.departmentStore.setLoading(false);
@@ -153,9 +163,11 @@ export class DepartmentService {
         this.http.put<UserRoleResponse>(`/api/departments/${departmentId}/members/${userId}`, { role }),
       );
       this.departmentStore.updateMember(userId, ur.role.toLowerCase() as 'admin' | 'viewer');
+      this.toastService.success('Member role updated');
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to update member role');
       this.departmentStore.setError(message);
+      this.toastService.error(message);
       throw err;
     }
   }
@@ -169,9 +181,11 @@ export class DepartmentService {
         this.http.delete(`/api/departments/${departmentId}/members/${userId}`),
       );
       this.departmentStore.removeMember(userId);
+      this.toastService.success('Member removed');
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to remove member');
       this.departmentStore.setError(message);
+      this.toastService.error(message);
       throw err;
     } finally {
       this.departmentStore.setLoading(false);
@@ -199,6 +213,7 @@ export class DepartmentService {
     } catch (err: unknown) {
       const message = this.extractError(err, 'Failed to create user');
       this.departmentStore.setError(message);
+      this.toastService.error(message);
       throw err;
     }
   }

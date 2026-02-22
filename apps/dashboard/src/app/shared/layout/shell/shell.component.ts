@@ -10,10 +10,11 @@ import { KeyboardShortcutsService } from '../../../core/services/keyboard-shortc
 import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { ShortcutsHelpComponent } from '../../shortcuts-help/shortcuts-help.component';
+import { ToastContainerComponent } from '../../toast/toast-container.component';
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, HeaderComponent, SidebarComponent, ShortcutsHelpComponent],
+  imports: [RouterOutlet, HeaderComponent, SidebarComponent, ShortcutsHelpComponent, ToastContainerComponent],
   templateUrl: './shell.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -5,6 +5,7 @@ import { TaskStore } from '../../../core/stores/task.store';
 import { AuthStore } from '../../../core/stores/auth.store';
 import { DepartmentStore } from '../../../core/stores/department.store';
 import { TaskService } from '../../../core/services/task.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { TaskCardComponent } from '../task-card/task-card.component';
 
 @Component({
@@ -21,12 +22,19 @@ export class TaskKanbanComponent {
   private authStore = inject(AuthStore);
   private departmentStore = inject(DepartmentStore);
   private taskService = inject(TaskService);
+  private toastService = inject(ToastService);
 
   protected columns = [
     { status: TaskStatus.TODO, label: 'To Do' },
     { status: TaskStatus.IN_PROGRESS, label: 'In Progress' },
     { status: TaskStatus.DONE, label: 'Done' },
   ];
+
+  private readonly statusLabel: Record<TaskStatus, string> = {
+    [TaskStatus.TODO]: 'To Do',
+    [TaskStatus.IN_PROGRESS]: 'In Progress',
+    [TaskStatus.DONE]: 'Done',
+  };
 
   protected connectedLists = [TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE];
 
@@ -58,6 +66,7 @@ export class TaskKanbanComponent {
       const newPosition = event.currentIndex;
       this.taskStore.updateTask({ ...task, status: newStatus, position: newPosition });
       await this.taskService.reorderTask(task.id, { status: newStatus, position: newPosition });
+      this.toastService.success(`Task moved to ${this.statusLabel[newStatus]}`);
     }
   }
 }
