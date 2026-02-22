@@ -82,6 +82,13 @@ export class DepartmentStore {
     }));
   }
 
+  updateMember(userId: string, role: 'admin' | 'viewer'): void {
+    this._state.update((s) => ({
+      ...s,
+      members: s.members.map((m) => m.user.id === userId ? { ...m, role } : m),
+    }));
+  }
+
   setLoading(isLoading: boolean): void {
     this._state.update((s) => ({ ...s, isLoading }));
   }

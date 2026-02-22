@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserRole } from '@task-management/data';
-import { InviteMemberDto } from '@task-management/data/dto';
+import { InviteMemberDto, UpdateMemberDto } from '@task-management/data/dto';
 
 import { User } from '../entities/user.entity';
 import { Department } from '../entities/department.entity';
@@ -141,6 +141,35 @@ export class DepartmentMembersService {
     }
 
     await this.userRoleRepo.remove(targetRole);
+  }
+
+  /** Update a member's role within a department. Owner-only. */
+  async updateRole(
+    user: User,
+    departmentId: string,
+    targetUserId: string,
+    dto: UpdateMemberDto,
+  ): Promise<UserRoleEntity> {
+    await this.findDepartmentInOrg(user, departmentId);
+
+    if (!this.acl.isOwner(user)) {
+      throw new ForbiddenException('Only the organization owner can change member roles');
+    }
+
+    const targetRole = await this.userRoleRepo.findOne({
+      where: { userId: targetUserId, departmentId },
+    });
+    if (!targetRole) {
+      throw new NotFoundException('Member not found in this department');
+    }
+
+    targetRole.role = dto.role;
+    const saved = await this.userRoleRepo.save(targetRole);
+
+    return this.userRoleRepo.findOneOrFail({
+      where: { id: saved.id },
+      relations: ['user'],
+    });
   }
 
   /** Loads a department and verifies it belongs to the user's organization. */

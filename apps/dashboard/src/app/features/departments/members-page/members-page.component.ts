@@ -6,7 +6,9 @@ import {
   lucideTrash2,
   lucideUsers,
   lucideArrowLeft,
+  lucideLoader,
 } from '@ng-icons/lucide';
+import { UserRole } from '@task-management/data';
 import { DepartmentStore } from '../../../core/stores/department.store';
 import { DepartmentService } from '../../../core/services/department.service';
 import { AuthStore } from '../../../core/stores/auth.store';
@@ -28,7 +30,7 @@ interface MemberView {
     ConfirmDialogComponent,
   ],
   providers: [
-    provideIcons({ lucideUserPlus, lucideTrash2, lucideUsers, lucideArrowLeft }),
+    provideIcons({ lucideUserPlus, lucideTrash2, lucideUsers, lucideArrowLeft, lucideLoader }),
   ],
   templateUrl: './members-page.component.html',
 })
@@ -38,11 +40,13 @@ export class MembersPageComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private departmentService = inject(DepartmentService);
 
+  protected readonly UserRole = UserRole;
   protected deptId = '';
 
   protected showInviteModal = signal(false);
   protected showConfirmDialog = signal(false);
   protected removingMember = signal<MemberView | null>(null);
+  protected updatingMemberId = signal<string | null>(null);
 
   protected canInvite = computed(() => {
     if (this.authStore.isOwner()) return true;
@@ -54,6 +58,23 @@ export class MembersPageComponent implements OnInit {
     if (this.deptId) {
       this.departmentStore.setCurrentDepartment(this.deptId);
       this.departmentService.loadMembers(this.deptId);
+    }
+  }
+
+  canEditRole(): boolean {
+    return this.authStore.isOwner();
+  }
+
+  async updateRole(member: MemberView, newRole: UserRole.ADMIN | UserRole.VIEWER): Promise<void> {
+    if (newRole === member.role.toUpperCase() || this.updatingMemberId() !== null) return;
+
+    this.updatingMemberId.set(member.user.id);
+    try {
+      await this.departmentService.updateMemberRole(this.deptId, member.user.id, newRole);
+    } catch {
+      // Error is displayed via departmentStore.error()
+    } finally {
+      this.updatingMemberId.set(null);
     }
   }
 

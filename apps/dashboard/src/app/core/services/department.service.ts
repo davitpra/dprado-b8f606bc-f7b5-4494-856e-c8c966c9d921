@@ -141,6 +141,25 @@ export class DepartmentService {
     }
   }
 
+  async updateMemberRole(
+    departmentId: string,
+    userId: string,
+    role: UserRole.ADMIN | UserRole.VIEWER,
+  ): Promise<void> {
+    this.departmentStore.setError(null);
+
+    try {
+      const ur = await firstValueFrom(
+        this.http.put<UserRoleResponse>(`/api/departments/${departmentId}/members/${userId}`, { role }),
+      );
+      this.departmentStore.updateMember(userId, ur.role.toLowerCase() as 'admin' | 'viewer');
+    } catch (err: unknown) {
+      const message = this.extractError(err, 'Failed to update member role');
+      this.departmentStore.setError(message);
+      throw err;
+    }
+  }
+
   async removeMember(departmentId: string, userId: string): Promise<void> {
     this.departmentStore.setLoading(true);
     this.departmentStore.setError(null);

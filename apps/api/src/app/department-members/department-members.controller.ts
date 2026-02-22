@@ -7,10 +7,11 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@task-management/auth';
-import { InviteMemberDto } from '@task-management/data/dto';
+import { InviteMemberDto, UpdateMemberDto } from '@task-management/data/dto';
 
 import { User } from '../entities/user.entity';
 import { DepartmentMembersService } from './department-members.service';
@@ -51,6 +52,26 @@ export class DepartmentMembersController {
     @Param('departmentId') departmentId: string,
   ) {
     return this.membersService.findAll(user, departmentId);
+  }
+
+  /** PUT /api/departments/:departmentId/members/:userId — update a member's role. */
+  @Put(':userId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Update a member's role (Owner only)" })
+  @ApiParam({ name: 'departmentId', description: 'Department UUID' })
+  @ApiParam({ name: 'userId', description: 'User UUID to update' })
+  @ApiResponse({ status: 200, description: 'Member role updated successfully' })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden — Owner only' })
+  @ApiResponse({ status: 404, description: 'Department or member not found' })
+  updateRole(
+    @CurrentUser() user: User,
+    @Param('departmentId') departmentId: string,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateMemberDto,
+  ) {
+    return this.membersService.updateRole(user, departmentId, userId, dto);
   }
 
   /** DELETE /api/departments/:departmentId/members/:userId — remove a member. */

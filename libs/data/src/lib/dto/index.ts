@@ -15,6 +15,7 @@ export * from './department/update-department.dto.js';
 
 // Members
 export * from './member/invite-member.dto.js';
+export * from './member/update-member.dto.js';
 
 // Audit
 export * from './audit/audit-log-filter.dto.js';
