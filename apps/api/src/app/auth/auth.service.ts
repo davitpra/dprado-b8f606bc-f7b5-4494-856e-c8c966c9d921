@@ -40,7 +40,7 @@ export class AuthService {
 
     // Create a default organization for the new user
     const org = this.orgRepo.create({
-      name: `${dto.firstName}'s Organization`,
+      name: dto.organizationName?.trim() || `${dto.firstName}'s Organization`,
     });
     await this.orgRepo.save(org);
 

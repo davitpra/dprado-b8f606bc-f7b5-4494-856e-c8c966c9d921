@@ -7,13 +7,13 @@ import { AuthStore } from '../../../core/stores/auth.store';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, NgIcon, RouterLink],
   providers: [provideIcons({ lucideEye, lucideEyeOff })],
-  templateUrl: './login.component.html',
+  templateUrl: './register.component.html',
 })
-export class LoginComponent {
+export class RegisterComponent {
   protected authStore = inject(AuthStore);
   private router = inject(Router);
   private fb = inject(NonNullableFormBuilder);
@@ -22,15 +22,26 @@ export class LoginComponent {
   protected showPassword = signal(false);
 
   protected form = this.fb.group({
+    firstName: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(64)]],
+    lastName: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(64)]],
+    organizationName: ['', [Validators.required, Validators.minLength(1), Validators.maxLength(128)]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required]],
+    password: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.maxLength(128),
+        Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
+      ],
+    ],
   });
 
   protected async onSubmit(): Promise<void> {
     if (this.form.invalid) return;
-    const { email, password } = this.form.getRawValue();
+    const { firstName, lastName, organizationName, email, password } = this.form.getRawValue();
     try {
-      await this.authService.login(email, password);
+      await this.authService.register({ firstName, lastName, organizationName, email, password });
       this.router.navigate(['/app/tasks']);
     } catch {
       // error already set in store by AuthService

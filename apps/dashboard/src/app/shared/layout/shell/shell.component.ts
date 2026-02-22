@@ -4,6 +4,7 @@ import { AuthStore } from '../../../core/stores/auth.store';
 import { DepartmentStore } from '../../../core/stores/department.store';
 import { UIStore } from '../../../core/stores/ui.store';
 import { DepartmentService } from '../../../core/services/department.service';
+import { OrganizationService } from '../../../core/services/organization.service';
 import { TaskService } from '../../../core/services/task.service';
 import { HeaderComponent } from '../header/header.component';
 import { SidebarComponent } from '../sidebar/sidebar.component';
@@ -19,6 +20,7 @@ export class ShellComponent {
   private authStore = inject(AuthStore);
   private departmentStore = inject(DepartmentStore);
   private departmentService = inject(DepartmentService);
+  private organizationService = inject(OrganizationService);
   private taskService = inject(TaskService);
 
   private depsLoaded = false;
@@ -37,6 +39,7 @@ export class ShellComponent {
       untracked(() => {
         if (!this.depsLoaded) {
           this.depsLoaded = true;
+          this.organizationService.loadOrganization();
           this.departmentService.loadDepartments().then(() => {
             // Auto-select first department for non-owners
             if (!this.authStore.isOwner() && !this.departmentStore.currentDepartmentId()) {
