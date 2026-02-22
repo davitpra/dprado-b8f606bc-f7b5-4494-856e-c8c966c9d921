@@ -3,24 +3,7 @@ import { Component, input, output } from '@angular/core';
 @Component({
   selector: 'app-confirm-dialog',
   standalone: true,
-  template: `
-    <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]" (click)="cancelled.emit()">
-      <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-[400px]" (click)="$event.stopPropagation()">
-        <h3 class="m-0 mb-3 text-lg text-gray-900 dark:text-gray-100">{{ title() }}</h3>
-        <p class="m-0 mb-6 text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{{ message() }}</p>
-        <div class="flex justify-end gap-3">
-          <button
-            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer text-gray-700 dark:text-gray-300"
-            (click)="cancelled.emit()">Cancel</button>
-          <button
-            class="px-4 py-2 bg-red-600 text-white border-none rounded-md cursor-pointer font-medium"
-            (click)="confirmed.emit()">
-            {{ confirmLabel() }}
-          </button>
-        </div>
-      </div>
-    </div>
-  `,
+  templateUrl: './confirm-dialog.component.html',
 })
 export class ConfirmDialogComponent {
   title = input('Confirm');

@@ -7,67 +7,7 @@ import { UIStore } from '../../../core/stores/ui.store';
   selector: 'app-task-filters',
   standalone: true,
   imports: [],
-  template: `
-    <div class="flex flex-wrap gap-2.5 items-center px-4 py-3 bg-white dark:bg-gray-800 rounded-lg mb-4 shadow-sm">
-      <input
-        type="search"
-        placeholder="Search tasks…"
-        [value]="taskStore.filters().search"
-        (input)="onSearch($event)"
-        aria-label="Search tasks"
-        class="flex-1 min-w-[160px] px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
-      />
-      <select
-        [value]="taskStore.filters().status ?? ''"
-        (change)="onStatusChange($event)"
-        aria-label="Filter by status"
-        class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-      >
-        <option value="">All Statuses</option>
-        @for (s of statuses; track s) {
-          <option [value]="s">{{ s }}</option>
-        }
-      </select>
-      <select
-        [value]="taskStore.filters().category ?? ''"
-        (change)="onCategoryChange($event)"
-        aria-label="Filter by category"
-        class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-      >
-        <option value="">All Categories</option>
-        @for (c of categories; track c) {
-          <option [value]="c">{{ c }}</option>
-        }
-      </select>
-      <select
-        [value]="taskStore.filters().priority ?? ''"
-        (change)="onPriorityChange($event)"
-        aria-label="Filter by priority"
-        class="px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-      >
-        <option value="">All Priorities</option>
-        @for (p of priorities; track p) {
-          <option [value]="p">{{ p }}</option>
-        }
-      </select>
-      @if (taskStore.hasActiveFilters()) {
-        <button class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-xs cursor-pointer text-gray-500 dark:text-gray-400"
-          (click)="taskStore.resetFilters()">Clear</button>
-      }
-      <div class="ml-auto flex border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden">
-        <button
-          (click)="uiStore.setTaskView('kanban')"
-          [class]="'px-3 py-1.5 border-none text-xs cursor-pointer ' + (uiStore.taskView() === 'kanban' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400')"
-          aria-label="Kanban view"
-        >Kanban</button>
-        <button
-          (click)="uiStore.setTaskView('list')"
-          [class]="'px-3 py-1.5 border-none text-xs cursor-pointer ' + (uiStore.taskView() === 'list' ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-400')"
-          aria-label="List view"
-        >List</button>
-      </div>
-    </div>
-  `,
+  templateUrl: './task-filters.component.html',
 })
 export class TaskFiltersComponent {
   protected taskStore = inject(TaskStore);

@@ -22,42 +22,7 @@ import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-d
     TaskModalComponent,
     ConfirmDialogComponent,
   ],
-  template: `
-    <div>
-      <div class="flex items-center justify-between mb-4">
-        <h1 class="m-0 text-2xl font-bold text-gray-900 dark:text-gray-100">Tasks</h1>
-        @if (canCreateTask()) {
-          <button
-            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white border-none rounded-md cursor-pointer text-sm font-medium"
-            (click)="openModal()">
-            + New Task
-          </button>
-        }
-      </div>
-
-      <app-task-filters />
-
-      @if (uiStore.taskView() === 'kanban') {
-        <app-task-kanban (editTask)="openModal($event)" (deleteTask)="onDeleteTask($event)" />
-      } @else {
-        <app-task-list (editTask)="openModal($event)" (deleteTask)="onDeleteTask($event)" />
-      }
-
-      @if (showModal()) {
-        <app-task-modal [editTask]="editingTask()" (closed)="closeModal()" (saved)="onSave($event)" />
-      }
-
-      @if (pendingDeleteTask()) {
-        <app-confirm-dialog
-          title="Delete Task"
-          [message]="deleteMessage()"
-          confirmLabel="Delete"
-          (confirmed)="confirmDelete()"
-          (cancelled)="pendingDeleteTask.set(null)"
-        />
-      }
-    </div>
-  `,
+  templateUrl: './task-board.component.html',
 })
 export class TaskDashboardComponent {
   protected taskStore = inject(TaskStore);
