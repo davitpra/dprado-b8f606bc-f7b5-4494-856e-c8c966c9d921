@@ -6,8 +6,9 @@
   <!-- Filters bar -->
   <div class="mb-4 flex flex-wrap gap-3 items-end bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
     <div class="flex flex-col gap-1 min-w-[140px]">
-      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</label>
+      <label for="dateFrom" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">From</label>
       <input
+        id="dateFrom"
         type="date"
         class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         [value]="auditLogStore.filters().dateFrom"
@@ -15,8 +16,9 @@
       />
     </div>
     <div class="flex flex-col gap-1 min-w-[140px]">
-      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To</label>
+      <label for="dateTo" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">To</label>
       <input
+        id="dateTo"
         type="date"
         class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         [value]="auditLogStore.filters().dateTo"
@@ -24,8 +26,9 @@
       />
     </div>
     <div class="flex flex-col gap-1 min-w-[130px]">
-      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</label>
+      <label for="action" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Action</label>
       <select
+        id="action"
         class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         [value]="auditLogStore.filters().action"
         (change)="onFilterChange({ action: $any($event.target).value })"
@@ -37,8 +40,9 @@
       </select>
     </div>
     <div class="flex flex-col gap-1 min-w-[140px]">
-      <label class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Resource</label>
+      <label for="resource" class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Resource</label>
       <select
+        id="resource"
         class="px-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         [value]="auditLogStore.filters().resource"
         (change)="onFilterChange({ resource: $any($event.target).value })"
