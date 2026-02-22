@@ -2,6 +2,14 @@ import { Component, inject, effect } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { map } from 'rxjs';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import {
+  lucideSearch,
+  lucideSlidersHorizontal,
+  lucideX,
+  lucideList,
+  lucideLayoutDashboard,
+} from '@ng-icons/lucide';
 import { TaskStatus, TaskCategory, TaskPriority } from '@task-management/data';
 import { TaskStore } from '../../../core/stores/task.store';
 import { UIStore } from '../../../core/stores/ui.store';
@@ -9,7 +17,10 @@ import { UIStore } from '../../../core/stores/ui.store';
 @Component({
   selector: 'app-task-filters',
   standalone: true,
-  imports: [],
+  imports: [NgIcon],
+  providers: [
+    provideIcons({ lucideSearch, lucideSlidersHorizontal, lucideX, lucideList, lucideLayoutDashboard }),
+  ],
   templateUrl: './task-filters.component.html',
 })
 export class TaskFiltersComponent {

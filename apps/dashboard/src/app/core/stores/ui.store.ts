@@ -13,7 +13,7 @@ interface UIState {
 export class UIStore {
   private readonly _state = signal<UIState>({
     theme: (localStorage.getItem('theme') as Theme) ?? 'light',
-    taskView: 'kanban',
+    taskView: 'list',
     isSidebarOpen: true,
   });
 
