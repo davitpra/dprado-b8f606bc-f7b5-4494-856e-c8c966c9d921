@@ -5,43 +5,125 @@
       <button class="bg-transparent border-none text-base cursor-pointer text-gray-500 dark:text-gray-400" (click)="onClose()" aria-label="Close">&#10005;</button>
     </div>
 
+    @if (canCreateUser()) {
+      <div class="flex gap-1 mb-5 border-b border-gray-200 dark:border-gray-700">
+        <button type="button"
+          class="px-4 py-2 text-sm font-medium border-b-2 -mb-px cursor-pointer bg-transparent"
+          [class.border-blue-500]="mode() === 'existing'"
+          [class.text-blue-600]="mode() === 'existing'"
+          [class.dark:text-blue-400]="mode() === 'existing'"
+          [class.border-transparent]="mode() !== 'existing'"
+          [class.text-gray-500]="mode() !== 'existing'"
+          [class.dark:text-gray-400]="mode() !== 'existing'"
+          (click)="setMode('existing')">
+          Existing User
+        </button>
+        <button type="button"
+          class="px-4 py-2 text-sm font-medium border-b-2 -mb-px cursor-pointer bg-transparent"
+          [class.border-blue-500]="mode() === 'new'"
+          [class.text-blue-600]="mode() === 'new'"
+          [class.dark:text-blue-400]="mode() === 'new'"
+          [class.border-transparent]="mode() !== 'new'"
+          [class.text-gray-500]="mode() !== 'new'"
+          [class.dark:text-gray-400]="mode() !== 'new'"
+          (click)="setMode('new')">
+          New User
+        </button>
+      </div>
+    }
+
     @if (departmentStore.error()) {
       <div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-3 py-2 rounded-md text-sm mb-4">
         {{ departmentStore.error() }}
       </div>
     }
 
-    @if (loadingUsers()) {
-      <p class="text-gray-500 dark:text-gray-400 text-sm m-0 mb-4">Loading users...</p>
-    } @else if (availableUsers().length === 0) {
-      <p class="text-gray-500 dark:text-gray-400 text-sm m-0 mb-4">All organization members are already in this department.</p>
-      <div class="flex justify-end gap-3 mt-6">
-        <button type="button"
-          class="px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer text-gray-700 dark:text-gray-300"
-          (click)="onClose()">Close</button>
-      </div>
-    } @else {
-      <form [formGroup]="form" (ngSubmit)="onSubmit()">
-        <div class="flex flex-col mb-4">
-          <label for="invite-user" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">User *</label>
-          <select id="invite-user" formControlName="userId"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500">
-            <option value="" disabled>Select a user</option>
-            @for (user of availableUsers(); track user.id) {
-              <option [value]="user.id">
-                {{ user.firstName }} {{ user.lastName }} ({{ user.email }})
-              </option>
-            }
-          </select>
+    @if (mode() === 'existing') {
+      @if (loadingUsers()) {
+        <p class="text-gray-500 dark:text-gray-400 text-sm m-0 mb-4">Loading users...</p>
+      } @else if (!canCreateUser() && availableUsers().length === 0) {
+        <p class="text-gray-500 dark:text-gray-400 text-sm m-0 mb-4">All organization members are already in this department.</p>
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="button"
+            class="px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer text-gray-700 dark:text-gray-300"
+            (click)="onClose()">Close</button>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()">
+          @if (availableUsers().length === 0) {
+            <p class="text-gray-500 dark:text-gray-400 text-sm m-0 mb-4">All organization members are already in this department.</p>
+          } @else {
+            <div class="flex flex-col mb-4">
+              <label for="invite-user" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">User *</label>
+              <select id="invite-user" formControlName="userId"
+                class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500">
+                <option value="" disabled>Select a user</option>
+                @for (user of availableUsers(); track user.id) {
+                  <option [value]="user.id">
+                    {{ user.firstName }} {{ user.lastName }} ({{ user.email }})
+                  </option>
+                }
+              </select>
+            </div>
+          }
+          <div class="flex flex-col mb-4">
+            <label for="invite-role" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Role *</label>
+            <select id="invite-role" formControlName="role"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500">
+              <option value="VIEWER">Viewer</option>
+              @if (authStore.isOwner()) {
+                <option value="ADMIN">Admin</option>
+              }
+            </select>
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button"
+              class="px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md cursor-pointer text-gray-700 dark:text-gray-300"
+              (click)="onClose()">Cancel</button>
+            <button type="submit"
+              class="px-4 py-2 bg-blue-500 text-white border-none rounded-md cursor-pointer font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+              [disabled]="form.invalid || availableUsers().length === 0 || departmentStore.isLoading()">
+              Invite
+            </button>
+          </div>
+        </form>
+      }
+    }
+
+    @if (mode() === 'new') {
+      <form [formGroup]="createUserForm" (ngSubmit)="onSubmit()">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="flex flex-col">
+            <label for="new-first-name" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">First Name *</label>
+            <input id="new-first-name" type="text" formControlName="firstName"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500"
+              placeholder="John" />
+          </div>
+          <div class="flex flex-col">
+            <label for="new-last-name" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Last Name *</label>
+            <input id="new-last-name" type="text" formControlName="lastName"
+              class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500"
+              placeholder="Doe" />
+          </div>
         </div>
         <div class="flex flex-col mb-4">
-          <label for="invite-role" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Role *</label>
-          <select id="invite-role" formControlName="role"
+          <label for="new-email" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Email *</label>
+          <input id="new-email" type="email" formControlName="email"
+            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500"
+            placeholder="user@example.com" />
+        </div>
+        <div class="flex flex-col mb-4">
+          <label for="new-password" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Password *</label>
+          <input id="new-password" type="password" formControlName="password"
+            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500"
+            placeholder="Min 8 chars, upper + lower + number" />
+        </div>
+        <div class="flex flex-col mb-4">
+          <label for="new-role" class="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Role *</label>
+          <select id="new-role" formControlName="role"
             class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500">
             <option value="VIEWER">Viewer</option>
-            @if (authStore.isOwner()) {
-              <option value="ADMIN">Admin</option>
-            }
+            <option value="ADMIN">Admin</option>
           </select>
         </div>
         <div class="flex justify-end gap-3 mt-6">
@@ -50,8 +132,8 @@
             (click)="onClose()">Cancel</button>
           <button type="submit"
             class="px-4 py-2 bg-blue-500 text-white border-none rounded-md cursor-pointer font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-            [disabled]="form.invalid || departmentStore.isLoading()">
-            Invite
+            [disabled]="createUserForm.invalid || departmentStore.isLoading()">
+            Create &amp; Invite
           </button>
         </div>
       </form>

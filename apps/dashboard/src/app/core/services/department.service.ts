@@ -185,6 +185,23 @@ export class DepartmentService {
     return users;
   }
 
+  async createOrgUser(data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }): Promise<IUser> {
+    try {
+      return await firstValueFrom(
+        this.http.post<IUser>('/api/organizations/me/users', data),
+      );
+    } catch (err: unknown) {
+      const message = this.extractError(err, 'Failed to create user');
+      this.departmentStore.setError(message);
+      throw err;
+    }
+  }
+
   private extractError(err: unknown, fallback: string): string {
     return err instanceof Object && 'error' in err
       ? ((err as { error: { message?: string } }).error.message ?? fallback)

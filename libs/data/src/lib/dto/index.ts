@@ -20,5 +20,8 @@ export * from './member/update-member.dto.js';
 // Audit
 export * from './audit/audit-log-filter.dto.js';
 
+// Users
+export * from './user/create-org-user.dto.js';
+
 // Common
 export * from './common/paginated-response.dto.js';
