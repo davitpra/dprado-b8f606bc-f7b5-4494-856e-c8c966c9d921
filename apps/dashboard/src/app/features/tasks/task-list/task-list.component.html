@@ -13,6 +13,7 @@
           <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Priority</th>
           <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Category</th>
           <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Due Date</th>
+          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Assignee</th>
           <th class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700"></th>
         </tr>
       </thead>
@@ -54,6 +55,16 @@
             </td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">{{ task.category }}</td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">{{ task.dueDate ? (task.dueDate | date:'mediumDate') : '—' }}</td>
+            <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 text-sm text-gray-700 dark:text-gray-300">
+              @if (getAssignedUser(task); as user) {
+                <span class="flex items-center gap-1.5">
+                  <ng-icon name="lucideUser" size="13" class="text-gray-400 dark:text-gray-500 shrink-0" />
+                  {{ user.firstName }} {{ user.lastName }}
+                </span>
+              } @else {
+                <span class="text-gray-400 dark:text-gray-500">—</span>
+              }
+            </td>
             <td class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
               @if (canEditTask(task)) {
                 <div class="flex gap-1">

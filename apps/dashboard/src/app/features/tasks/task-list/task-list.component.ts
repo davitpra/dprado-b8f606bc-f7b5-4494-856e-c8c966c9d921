@@ -8,7 +8,7 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideGripVertical, lucidePencil, lucideTrash2 } from '@ng-icons/lucide';
+import { lucideGripVertical, lucidePencil, lucideTrash2, lucideUser } from '@ng-icons/lucide';
 import { ITask } from '@task-management/data';
 import { TaskStore } from '../../../core/stores/task.store';
 import { AuthStore } from '../../../core/stores/auth.store';
@@ -19,7 +19,7 @@ import { TaskService } from '../../../core/services/task.service';
   selector: 'app-task-list',
   standalone: true,
   imports: [DatePipe, CdkDropList, CdkDrag, CdkDragHandle, NgIcon],
-  providers: [provideIcons({ lucideGripVertical, lucidePencil, lucideTrash2 })],
+  providers: [provideIcons({ lucideGripVertical, lucidePencil, lucideTrash2, lucideUser })],
   templateUrl: './task-list.component.html',
 })
 export class TaskListComponent {
@@ -43,6 +43,11 @@ export class TaskListComponent {
     effect(() => {
       this.tasks.set(this.taskStore.filteredTasks());
     });
+  }
+
+  getAssignedUser(task: ITask) {
+    if (!task.assignedToId) return null;
+    return this.departmentStore.members().find((m) => m.user.id === task.assignedToId)?.user ?? null;
   }
 
   canEditTask(task: ITask): boolean {
