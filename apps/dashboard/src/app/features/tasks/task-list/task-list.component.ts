@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect, output } from '@angular/core';
+import { Component, inject, signal, computed, effect, output } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import {
   CdkDropList,
@@ -8,7 +8,10 @@ import {
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideGripVertical, lucidePencil, lucideTrash2, lucideUser } from '@ng-icons/lucide';
+import {
+  lucideGripVertical, lucidePencil, lucideTrash2, lucideUser,
+  lucideArrowUp, lucideArrowDown, lucideChevronsUpDown,
+} from '@ng-icons/lucide';
 import { ITask } from '@task-management/data';
 import { TaskStore } from '../../../core/stores/task.store';
 import { AuthStore } from '../../../core/stores/auth.store';
@@ -19,7 +22,12 @@ import { TaskService } from '../../../core/services/task.service';
   selector: 'app-task-list',
   standalone: true,
   imports: [DatePipe, CdkDropList, CdkDrag, CdkDragHandle, NgIcon],
-  providers: [provideIcons({ lucideGripVertical, lucidePencil, lucideTrash2, lucideUser })],
+  providers: [
+    provideIcons({
+      lucideGripVertical, lucidePencil, lucideTrash2, lucideUser,
+      lucideArrowUp, lucideArrowDown, lucideChevronsUpDown,
+    }),
+  ],
   templateUrl: './task-list.component.html',
 })
 export class TaskListComponent {
@@ -32,6 +40,7 @@ export class TaskListComponent {
   private taskService = inject(TaskService);
 
   protected tasks = signal<ITask[]>([]);
+  protected readonly filters = computed(() => this.taskStore.filters());
 
   protected canDragTask(task: ITask): boolean {
     if (this.authStore.isOwner()) return true;
@@ -58,6 +67,15 @@ export class TaskListComponent {
     if (this.authStore.isOwner()) return true;
     if (this.authStore.isAdminInDepartment(task.departmentId)) return true;
     return task.createdById === user.id || task.assignedToId === user.id;
+  }
+
+  protected sort(column: 'title' | 'priority' | 'dueDate'): void {
+    const current = this.filters();
+    if (current.sortBy === column) {
+      this.taskStore.setFilters({ sortDirection: current.sortDirection === 'asc' ? 'desc' : 'asc' });
+    } else {
+      this.taskStore.setFilters({ sortBy: column, sortDirection: 'asc' });
+    }
   }
 
   onDrop(event: CdkDragDrop<ITask[]>): void {

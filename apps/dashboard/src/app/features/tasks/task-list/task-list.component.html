@@ -8,11 +8,65 @@
       <thead>
         <tr>
           <th class="w-8 px-2 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700"></th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Title</th>
+          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+            <button
+              (click)="sort('title')"
+              class="flex items-center gap-1 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer bg-transparent border-none p-0 font-semibold transition-colors"
+              [class.text-gray-900]="filters().sortBy === 'title'"
+              [class.dark:text-gray-100]="filters().sortBy === 'title'"
+              aria-label="Sort by title">
+              Title
+              @if (filters().sortBy === 'title') {
+                @if (filters().sortDirection === 'asc') {
+                  <ng-icon name="lucideArrowUp" size="12" />
+                } @else {
+                  <ng-icon name="lucideArrowDown" size="12" />
+                }
+              } @else {
+                <ng-icon name="lucideChevronsUpDown" size="12" class="opacity-40" />
+              }
+            </button>
+          </th>
           <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Status</th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Priority</th>
+          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+            <button
+              (click)="sort('priority')"
+              class="flex items-center gap-1 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer bg-transparent border-none p-0 font-semibold transition-colors"
+              [class.text-gray-900]="filters().sortBy === 'priority'"
+              [class.dark:text-gray-100]="filters().sortBy === 'priority'"
+              aria-label="Sort by priority">
+              Priority
+              @if (filters().sortBy === 'priority') {
+                @if (filters().sortDirection === 'asc') {
+                  <ng-icon name="lucideArrowUp" size="12" />
+                } @else {
+                  <ng-icon name="lucideArrowDown" size="12" />
+                }
+              } @else {
+                <ng-icon name="lucideChevronsUpDown" size="12" class="opacity-40" />
+              }
+            </button>
+          </th>
           <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Category</th>
-          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Due Date</th>
+          <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+            <button
+              (click)="sort('dueDate')"
+              class="flex items-center gap-1 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer bg-transparent border-none p-0 font-semibold transition-colors"
+              [class.text-gray-900]="filters().sortBy === 'dueDate'"
+              [class.dark:text-gray-100]="filters().sortBy === 'dueDate'"
+              aria-label="Sort by due date">
+              Due Date
+              @if (filters().sortBy === 'dueDate') {
+                @if (filters().sortDirection === 'asc') {
+                  <ng-icon name="lucideArrowUp" size="12" />
+                } @else {
+                  <ng-icon name="lucideArrowDown" size="12" />
+                }
+              } @else {
+                <ng-icon name="lucideChevronsUpDown" size="12" class="opacity-40" />
+              }
+            </button>
+          </th>
           <th class="text-left px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">Assignee</th>
           <th class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700"></th>
         </tr>
