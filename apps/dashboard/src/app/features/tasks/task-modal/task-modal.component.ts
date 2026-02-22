@@ -44,8 +44,8 @@ export class TaskModalComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid) return;
-    const values = this.form.getRawValue();
-    this.saved.emit(values);
+    const { dueDate, ...rest } = this.form.getRawValue();
+    this.saved.emit({ ...rest, ...(dueDate ? { dueDate } : {}) });
   }
 
   onClose(): void {

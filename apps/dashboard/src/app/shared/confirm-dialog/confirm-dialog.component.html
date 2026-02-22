@@ -1,10 +1,16 @@
 <div
   class="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
   (click)="cancelled.emit()"
+  (keydown.escape)="cancelled.emit()"
+  tabindex="0"
 >
   <div
+    role="dialog"
+    aria-modal="true"
     class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-[400px]"
     (click)="$event.stopPropagation()"
+    (keydown)="$event.stopPropagation()"
+    tabindex="-1"
   >
     <h3 class="m-0 mb-3 text-lg text-gray-900 dark:text-gray-100">{{ title() }}</h3>
     <p class="m-0 mb-6 text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{{ message() }}</p>
