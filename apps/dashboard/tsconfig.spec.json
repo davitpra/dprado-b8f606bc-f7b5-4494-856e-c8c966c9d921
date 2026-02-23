@@ -3,6 +3,7 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "esModuleInterop": true,
+    "declarationMap": false,
     "types": ["jest", "node"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"]
