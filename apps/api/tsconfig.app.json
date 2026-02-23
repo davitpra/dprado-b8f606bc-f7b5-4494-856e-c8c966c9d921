@@ -11,7 +11,7 @@
     "target": "es2021"
   },
   "include": ["src/**/*.ts"],
-  "exclude": [],
+  "exclude": ["src/**/*.spec.ts", "src/test/**", "src/test-setup.ts"],
   "references": [
     {
       "path": "../../libs/data/tsconfig.lib.json"
