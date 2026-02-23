@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["jest", "node"],
+    "declarationMap": false,
+    "composite": false,
+    "emitDeclarationOnly": false,
+    "noEmitOnError": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "isolatedModules": false,
+    "noUnusedLocals": false,
+    "noImplicitReturns": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [],
+  "references": []
+}

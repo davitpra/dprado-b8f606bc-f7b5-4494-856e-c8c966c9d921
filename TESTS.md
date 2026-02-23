@@ -1,3 +1,844 @@
+# Documentación de Tests
+
+Cobertura completa del monorepo: NestJS API + Angular Dashboard.
+
+---
+
+# API — Documentación de Tests
+
+Suite completa del backend NestJS (`apps/api`).
+**17 spec files · 320 tests · todos en verde.**
+
+Ejecutar con:
+```bash
+npx nx test api
+npx nx test api --testFile=<ruta al spec>   # un archivo solo
+npx nx test api --coverage                   # con cobertura
+```
+
+Infraestructura:
+- **Tests unitarios** — `@nestjs/testing` con repositorios mockeados mediante `jest.fn()`
+- **Tests de integración** — NestJS full app + `supertest` + SQLite en memoria (`:memory:`)
+- `apps/api/src/test-setup.ts` — fija variables de entorno antes de cualquier import
+- `apps/api/src/test/helpers/app.helper.ts` — `createTestApp()` construye la app completa de prueba
+- `apps/api/src/test/helpers/seed.helper.ts` — `seedTestData()` + `getToken()` para escenarios RBAC
+
+---
+
+## Índice
+
+- [Access Control (unitarios)](#access-control-unitarios)
+- [Auth (unitarios)](#auth-unitarios)
+- [Audit (unitarios)](#audit-unitarios)
+- [Services de dominio (unitarios)](#services-de-dominio-unitarios)
+- [Auth API (integración)](#auth-api-integración)
+- [Tasks API (integración)](#tasks-api-integración)
+- [Departments API (integración)](#departments-api-integración)
+- [Members API (integración)](#members-api-integración)
+- [Organizations API (integración)](#organizations-api-integración)
+- [Audit Log API (integración)](#audit-log-api-integración)
+
+---
+
+## Access Control (unitarios)
+
+### `access-control.service.spec.ts`
+**Archivo:** `apps/api/src/app/access-control/access-control.service.spec.ts`
+**27 tests**
+
+Lógica central RBAC con repositorios mockeados. Cubre los cinco métodos públicos del servicio.
+
+**`isOwner()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| usuario con `isOwner=true` | Devuelve `true` |
+| usuario con `isOwner=false` | Devuelve `false` |
+
+**`getUserRoleForDepartment()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| fast-path — rol en dept encontrado | Devuelve el rol desde `user.roles` sin consultar DB |
+| fast-path — sin rol en ese dept | Devuelve `null` sin consultar DB |
+| DB fallback — rol encontrado | Llama a `findOne` cuando no hay `user.roles` precargados |
+| DB fallback — sin rol | Devuelve `null` cuando DB no encuentra nada |
+
+**`canAccessTask()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| Owner | Accede a cualquier tarea |
+| Admin en su dept | Accede a tarea del dept |
+| Admin en otro dept | No puede acceder |
+| Viewer — tarea propia (creador) | Puede acceder |
+| Viewer — tarea asignada a él | Puede acceder |
+| Viewer — tarea ajena | No puede acceder |
+| Sin rol en el dept | No puede acceder |
+
+**`canModifyTask()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| Owner | Puede modificar cualquier tarea |
+| Admin en su dept | Puede modificar |
+| Viewer — tarea propia | Puede modificar |
+| Viewer — tarea ajena | No puede modificar |
+
+**`canCreateTaskInDepartment()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| Owner | Puede crear en cualquier dept |
+| Admin en su dept | Puede crear |
+| Admin en otro dept | No puede crear |
+| Viewer | No puede crear |
+
+**`canManageDepartmentMembers()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| Owner — rol Admin | Puede gestionar |
+| Owner — rol Viewer | Puede gestionar |
+| Admin — invitar Viewer en su dept | Puede |
+| Admin — invitar Admin | No puede (solo Owner) |
+| Viewer — cualquier rol | No puede gestionar |
+
+**`getUserDepartments()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| devuelve depts con rol dept-scoped | Array de departamentos del usuario |
+| excluye entradas con `departmentId=null` | Las filas de OWNER no aparecen |
+
+---
+
+### `permissions.guard.spec.ts`
+**Archivo:** `apps/api/src/app/access-control/permissions.guard.spec.ts`
+**16 tests**
+
+Guard que comprueba el decorador `@RequirePermission`. Verifica la resolución del `departmentId` y el bypass de Owner.
+
+| Test | Qué verifica |
+|------|-------------|
+| sin `@RequirePermission` | Pasa sin verificar permisos |
+| sin usuario autenticado | Lanza `ForbiddenException` |
+| Owner — bypass | Devuelve `true` sin llamar a `hasPermission` |
+| `body.departmentId` (prioridad máxima) | Se pasa al `hasPermission` |
+| `params.departmentId` (fallback) | Cuando el body no lo tiene |
+| `query.departmentId` (fallback) | Cuando body y params son vacíos |
+| DB lookup de tarea (último recurso) | Carga la tarea por `params.id` y usa su `departmentId` |
+| Adjunta tarea cargada a `request.resolvedTask` | Para evitar doble lookup en guards siguientes |
+| Sin `departmentId` resoluble | Lanza `ForbiddenException` |
+| Sin params en absoluto | Lanza `ForbiddenException` |
+| `hasPermission → true` | Guard devuelve `true` |
+| `hasPermission → false` | Lanza `ForbiddenException` |
+| Propaga `action` y `resource` del decorador | Los pasa exactos a `hasPermission` |
+
+---
+
+### `task-ownership.guard.spec.ts`
+**Archivo:** `apps/api/src/app/access-control/task-ownership.guard.spec.ts`
+**12 tests**
+
+Guard de propiedad de tareas para rutas `POST /tasks` (crear) y `PUT/PATCH/DELETE /tasks/:id` (modificar).
+
+| Test | Qué verifica |
+|------|-------------|
+| sin usuario | Lanza `ForbiddenException` |
+| Owner — bypass | Devuelve `true` sin checks adicionales |
+| checkCreate — `canCreate → true` | Permite |
+| checkCreate — `canCreate → false` | Lanza `ForbiddenException` |
+| checkCreate — sin `body.departmentId` | Lanza `ForbiddenException` |
+| checkCreate — sin body | Lanza `ForbiddenException` |
+| checkModify — `canModify → true` | Permite |
+| checkModify — `canModify → false` | Lanza `ForbiddenException` |
+| checkModify — tarea no existe | Lanza `NotFoundException` |
+| checkModify — consulta con `withDeleted: true` | Soft-deletes también se validan |
+| checkModify — adjunta a `request.resolvedTask` | Evita DB lookup redundante |
+| checkModify — reutiliza `request.resolvedTask` cacheado | No llama a `findOne` si ya existe |
+
+---
+
+## Auth (unitarios)
+
+### `auth.service.spec.ts`
+**Archivo:** `apps/api/src/app/auth/auth.service.spec.ts`
+**20 tests**
+
+Lógica de autenticación con JwtService, bcrypt y repositorios mockeados.
+
+**`register()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| email duplicado | Lanza `ConflictException` |
+| crea organización para el nuevo usuario | `orgRepo.create` llamado con el nombre correcto |
+| usa `organizationName` del dto si se provee | Nombre de org personalizable |
+| crea el usuario vinculado a la org | `userRepo.create` con `organizationId` correcto |
+| crea rol OWNER con `departmentId=null` | Fila de `user_roles` org-wide |
+| devuelve `access_token` y `refresh_token` | Dos tokens generados |
+
+**`login()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| usuario no encontrado | Lanza `UnauthorizedException` |
+| contraseña incorrecta | Lanza `UnauthorizedException` |
+| credenciales válidas | Devuelve tokens |
+| selecciona campo password en query | `addSelect('user.password')` |
+| carga relación roles | `leftJoinAndSelect('user.roles', 'roles')` |
+
+**`refreshToken()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| tipo de token no es `'refresh'` | Lanza `UnauthorizedException` |
+| usuario no encontrado | Lanza `UnauthorizedException` |
+| token de refresh válido | Devuelve nuevos tokens |
+
+**`validateToken()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| token inválido/expirado | Lanza `UnauthorizedException` |
+| token válido | Devuelve el payload decodificado |
+| pasa `JWT_SECRET` correcto a `verify` | Usa la config para la clave |
+
+---
+
+### `jwt.strategy.spec.ts`
+**Archivo:** `apps/api/src/app/auth/jwt.strategy.spec.ts`
+**2 tests**
+
+Lógica de `JwtStrategy.validate()`: lookup de usuario en DB tras verificar el JWT.
+
+| Test | Qué verifica |
+|------|-------------|
+| usuario encontrado | Devuelve el objeto user con roles cargados |
+| usuario no encontrado | Lanza `UnauthorizedException` |
+
+---
+
+## Audit (unitarios)
+
+### `audit.service.spec.ts`
+**Archivo:** `apps/api/src/app/audit/audit.service.spec.ts`
+**22 tests**
+
+Servicio de auditoría: escritura silenciosa y consulta con RBAC + filtros + paginación.
+
+**`log()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| crea y guarda la entrada | `create` + `save` del repositorio |
+| error de DB — no lanza | Swallows la excepción silenciosamente |
+| error en `create` — no lanza | Swallows la excepción silenciosamente |
+
+**`findAll()` — RBAC**
+
+| Test | Qué verifica |
+|------|-------------|
+| Owner — scope a su organización | `WHERE user.organizationId = :orgId` |
+| Admin con un dept | Filtra por ese `departmentId` en el JSON de `details` |
+| Admin con múltiples depts | Construye condición OR |
+| Viewer | Lanza `ForbiddenException` |
+
+**`findAll()` — filtros opcionales**
+
+| Test | Qué verifica |
+|------|-------------|
+| `dateFrom` | `timestamp >= :dateFrom` |
+| `dateTo` | `timestamp <= :dateTo` |
+| `userId` | `userId = :userId` |
+| `action` | `action = :action` |
+| `resource` | `resource = :resource` |
+| `departmentId` | `LIKE` sobre el JSON de `details` |
+| múltiples filtros | Todos aplicados independientemente |
+| sin filtros | Sin `andWhere` adicionales |
+
+**`findAll()` — paginación**
+
+| Test | Qué verifica |
+|------|-------------|
+| defaults `page=1, limit=20` | `skip=0, take=20` |
+| `page=3, limit=10` | `skip=20, take=10` |
+| shape de `PaginatedResponseDto` | `items`, `total`, `page`, `limit`, `totalPages` |
+| `totalPages` redondea hacia arriba | `ceil(21/10) = 3` |
+
+---
+
+### `audit.interceptor.spec.ts`
+**Archivo:** `apps/api/src/app/audit/audit.interceptor.spec.ts`
+**20 tests**
+
+Interceptor que registra automáticamente todas las mutaciones HTTP.
+
+**Condiciones de skip**
+
+| Test | Qué verifica |
+|------|-------------|
+| peticiones GET | No se auditan |
+| rutas `/api/auth/*` | Excluidas |
+| ruta `/api/audit-log` | Excluida |
+
+**`mapMethodToAction`**
+
+| Test | Qué verifica |
+|------|-------------|
+| `POST → "create"` | |
+| `PUT → "update"` | |
+| `PATCH → "update"` | |
+| `DELETE → "delete"` | |
+
+**`deriveResource`**
+
+| Test | Qué verifica |
+|------|-------------|
+| `/api/tasks` → `"task"` | |
+| `/api/tasks/123` → `"task"` | |
+| `/api/departments` → `"department"` | |
+| `/api/departments/:id/members` → `"member"` | |
+| `/api/organizations/me/users` → `"organization"` | |
+| URL con query params | Se eliminan antes del parseo |
+
+**`resourceId`, `departmentId`, `ipAddress`, `userId`**
+
+| Test | Qué verifica |
+|------|-------------|
+| POST — usa id del response body | |
+| PUT/DELETE — usa `params.id` | |
+| `body.departmentId` (prioridad) | |
+| `params.departmentId` (ruta de members) | |
+| Response body `departmentId` (task update) | |
+| Dept create — usa id del response como `departmentId` | |
+| Dept update — usa `params.id` como `departmentId` | |
+| Strips `password` del body en los detalles | Datos sensibles no se loguean |
+| `x-forwarded-for` header | Prioridad sobre `socket.remoteAddress` |
+| `socket.remoteAddress` (fallback) | |
+| `request.user.id` cuando autenticado | |
+| `"anonymous"` cuando no hay user | |
+
+**`access_denied`**
+
+| Test | Qué verifica |
+|------|-------------|
+| `ForbiddenException` con user autenticado | Loguea `action: 'access_denied'` |
+| `ForbiddenException` sin user | No loguea (usuarios anónimos) |
+| Re-lanza el error original | El error llega al cliente |
+| Error no-Forbidden | No loguea `access_denied` |
+
+---
+
+## Services de dominio (unitarios)
+
+### `departments.service.spec.ts`
+**Archivo:** `apps/api/src/app/departments/departments.service.spec.ts`
+**16 tests**
+
+CRUD de departamentos con guard de Owner y scoping a organización.
+
+**`create()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| no-Owner | Lanza `ForbiddenException` |
+| Owner — crea dept en su org | `organizationId` correcto |
+| con `description` | Se almacena |
+| sin `description` | Se almacena como `null` |
+
+**`findAll()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| Owner — todos los depts de la org | Usa `find({ where: { organizationId } })` |
+| No-Owner — delega a `acl.getUserDepartments` | No llama a `find` directamente |
+
+**`update()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| no-Owner | Lanza `ForbiddenException` |
+| dept no existe | Lanza `NotFoundException` |
+| dept de otra org | Lanza `ForbiddenException` |
+| Owner — aplica dto y guarda | `save` llamado |
+
+**`remove()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| no-Owner | Lanza `ForbiddenException` |
+| dept no existe | Lanza `NotFoundException` |
+| dept de otra org | Lanza `ForbiddenException` |
+| Owner — elimina | `remove` llamado |
+
+---
+
+### `department-members.service.spec.ts`
+**Archivo:** `apps/api/src/app/department-members/department-members.service.spec.ts`
+**20 tests**
+
+Gestión de miembros: invite, list, remove, updateRole.
+
+**`invite()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| dept no encontrado | Lanza `NotFoundException` |
+| dept de otra org | Lanza `ForbiddenException` |
+| `canManage → false` | Lanza `ForbiddenException` |
+| usuario target no encontrado | Lanza `NotFoundException` |
+| usuario target de otra org | Lanza `ForbiddenException` |
+| target es Owner de la org | Lanza `ForbiddenException` |
+| target ya tiene rol en dept | Lanza `ConflictException` |
+| éxito | Crea `UserRole` y lo devuelve |
+
+**`findAll()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| dept no encontrado | Lanza `NotFoundException` |
+| Viewer | Lanza `ForbiddenException` |
+| sin rol en dept | Lanza `ForbiddenException` |
+| Owner — bypass del check de rol | Devuelve todos los miembros |
+| Admin — puede listar | Devuelve miembros |
+
+**`remove()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| miembro no encontrado | Lanza `NotFoundException` |
+| Owner — puede eliminar a cualquiera | `remove` llamado |
+| no-Admin intenta eliminar | Lanza `ForbiddenException` |
+| Admin intenta eliminar a otro Admin | Lanza `ForbiddenException` |
+| Admin elimina Viewer | `remove` llamado |
+
+**`updateRole()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| no-Owner | Lanza `ForbiddenException` |
+| miembro no encontrado | Lanza `NotFoundException` |
+| Owner — actualiza rol y devuelve | `save` llamado; devuelve el `UserRole` actualizado |
+
+---
+
+### `organizations.service.spec.ts`
+**Archivo:** `apps/api/src/app/organizations/organizations.service.spec.ts`
+**9 tests**
+
+Organización del usuario: consulta y creación de usuarios en la org.
+
+**`getByUser()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| org no encontrada | Lanza `NotFoundException` |
+| éxito | Devuelve org con relación `departments` cargada |
+
+**`getUsersForOrg()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| org no encontrada | Lanza `NotFoundException` |
+| éxito | Devuelve array de users con relaciones `users` y `users.roles` |
+
+**`createUser()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| no-Owner | Lanza `ForbiddenException` |
+| email duplicado | Lanza `ConflictException` |
+| Owner — crea user en su org | `organizationId` del owner |
+| devuelve el user guardado | `save` llamado |
+
+---
+
+### `tasks.service.spec.ts`
+**Archivo:** `apps/api/src/app/tasks/tasks.service.spec.ts`
+**34 tests**
+
+CRUD completo de tareas con posicionamiento, filtros RBAC y soft delete.
+
+**`create()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| dept no encontrado | Lanza `NotFoundException` |
+| dept de otra org | Lanza `NotFoundException` |
+| `canCreate → false` | Lanza `ForbiddenException` |
+| calcula posición por query builder | `position = maxPos + 1` |
+| asigna `createdById` del usuario | |
+| sin tareas previas — posición `0` | `maxPos = -1 → position = 0` |
+| devuelve tarea con relaciones | `findOne` con `['createdBy', 'assignedTo']` |
+
+**`findAll()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| Owner — consulta todos los depts de la org | `departmentId IN (...)` |
+| Owner — org sin depts | Devuelve vacío |
+| No-owner — sin roles en depts | Devuelve vacío |
+| No-owner — filtra por dept sin acceso | Lanza `ForbiddenException` |
+| Admin — ve todas las tareas del dept | |
+| Viewer — condition restringe a tareas propias | `createdById = :userId OR assignedToId = :userId` |
+| filtro `status` | Aplica `andWhere` con `status` |
+| shape de `PaginatedResponseDto` | `page`, `limit`, `total`, `items` |
+
+**`findOne()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| tarea no encontrada | Lanza `NotFoundException` |
+| `canAccess → false` | Lanza `ForbiddenException` |
+| acceso concedido | Devuelve la tarea |
+
+**`update()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| tarea no encontrada | Lanza `NotFoundException` |
+| `canModify → false` | Lanza `ForbiddenException` |
+| aplica campos del dto y guarda | `save` llamado |
+| limpia `assignedTo` cuando `assignedToId` viene en dto | Evita caching inconsistente |
+| no limpia `assignedTo` si no viene en dto | Preserva el valor existente |
+| devuelve tarea refrescada con relaciones | Segundo `findOne` |
+
+**`reorder()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| tarea no encontrada | Lanza `NotFoundException` |
+| `canModify → false` | Lanza `ForbiddenException` |
+| Viewer intenta reordenar | Lanza `ForbiddenException` |
+| Owner — sin check de rol | `getUserRoleForDepartment` no llamado |
+| Admin — puede reordenar | `save` llamado |
+| aplica `status` y `position` del dto | |
+
+**`remove()`**
+
+| Test | Qué verifica |
+|------|-------------|
+| tarea no encontrada | Lanza `NotFoundException` |
+| `canModify → false` | Lanza `ForbiddenException` |
+| llama `softRemove` | Soft delete (preserva en DB) |
+| devuelve la tarea después del delete | |
+
+---
+
+## Auth API (integración)
+
+### `auth.spec.ts`
+**Archivo:** `apps/api/src/test/auth.spec.ts`
+**18 tests**
+
+App NestJS completa + SQLite en memoria. Cubre registro, login, refresh y guard JWT.
+
+**`POST /api/auth/register`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| registro válido | 201 | Devuelve `access_token` y `refresh_token` |
+| email duplicado | 409 | |
+| campos requeridos faltantes | 400 | |
+| email inválido | 400 | |
+| contraseña débil (sin mayúscula) | 400 | |
+
+**`POST /api/auth/login`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| credenciales válidas | 201 | Devuelve ambos tokens |
+| contraseña incorrecta | 401 | |
+| email desconocido | 401 | |
+| credenciales faltantes | 400 | |
+
+**`POST /api/auth/refresh`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| refresh token válido | 201 | Nuevos tokens en respuesta |
+| token inválido (string plano) | 401 | |
+| access token usado como refresh | 401 | El tipo de token se valida |
+
+**`GET /api/auth/me`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| con token válido | 200 | User con `isOwner`, roles; sin `password` |
+| sin token | 401 | |
+
+**JWT guard (rutas protegidas)**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| `GET /tasks` sin token | 401 | |
+| token malformado | 401 | |
+| sin prefijo `Bearer` | 401 | |
+
+---
+
+## Tasks API (integración)
+
+### `tasks.spec.ts`
+**Archivo:** `apps/api/src/test/tasks.spec.ts`
+**32 tests**
+
+Matriz completa de RBAC × todos los endpoints de tareas. Usa 6 tokens (owner, adminEng, adminMkt, viewer1, viewer2, multi).
+
+**`POST /api/tasks`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner crea tarea en cualquier dept | 201 | owner |
+| Admin crea en su dept | 201 | adminEng |
+| Admin no puede crear en otro dept | 403 | adminEng → Marketing |
+| Viewer no puede crear | 403 | viewer1 |
+| Campos requeridos faltantes | 400 | |
+| Dept no existente | 404 | |
+
+**`GET /api/tasks`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner ve todas las tareas de todos los depts | 200 | `departmentId` de Engineering y Marketing |
+| Admin ve solo las de su dept | 200 | Solo Engineering |
+| Viewer ve solo sus propias tareas | 200 | `createdById` o `assignedToId` del viewer |
+| Multi-rol ve Engineering (admin) + Marketing propio (viewer) | 200 | |
+| Filtro por `status` | 200 | Solo tareas con ese status |
+| Filtro por `departmentId` | 200 | Solo tareas del dept |
+
+**`GET /api/tasks/:id`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner puede leer cualquier tarea | 200 | |
+| Admin puede leer tarea de su dept | 200 | |
+| Admin no puede leer tarea de otro dept | 403 | adminEng → mktTask |
+| Viewer puede leer su propia tarea | 200 | |
+| Viewer no puede leer tarea ajena del mismo dept | 403 | |
+| Tarea no existente | 404 | |
+
+**`PUT /api/tasks/:id`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner puede actualizar cualquier tarea | 200 | |
+| Admin puede actualizar tarea de su dept | 200 | |
+| Admin de otro dept no puede | 403 | adminMkt |
+| Viewer puede actualizar su propia tarea | 200 | |
+| Viewer no puede actualizar tarea ajena | 403 | |
+
+**`PATCH /api/tasks/:id/reorder`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner puede reordenar | 200 | Cambia status a IN_PROGRESS |
+| Admin puede reordenar en su dept | 200 | Cambia status a DONE |
+| Viewer no puede reordenar | 403 | |
+| Admin de otro dept no puede reordenar | 403 | adminMkt |
+
+**`DELETE /api/tasks/:id`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner puede eliminar cualquier tarea | 200 | Soft delete |
+| Admin puede eliminar tarea de su dept | 200 | |
+| Admin no puede eliminar tarea de otro dept | 403 | |
+| Viewer puede eliminar su propia tarea | 200 | |
+| Viewer no puede eliminar tarea ajena | 403 | |
+
+---
+
+## Departments API (integración)
+
+### `departments.spec.ts`
+**Archivo:** `apps/api/src/test/departments.spec.ts`
+**17 tests**
+
+CRUD de departamentos con scoping por rol. Solo el Owner puede crear, actualizar y eliminar.
+
+**`POST /api/departments`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner crea dept | 201 | |
+| Admin no puede crear | 403 | |
+| Viewer no puede crear | 403 | |
+| Nombre faltante | 400 | |
+| Sin token | 401 | |
+
+**`GET /api/departments`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner ve todos los depts | 200 | Engineering y Marketing |
+| Admin ve solo su dept | 200 | Solo Engineering; no Marketing |
+| Viewer ve solo su dept | 200 | Solo Engineering |
+| Sin token | 401 | |
+
+**`PUT /api/departments/:id`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner puede actualizar | 200 | Campo `name` actualizado |
+| Admin no puede | 403 | |
+| Viewer no puede | 403 | |
+| Dept no existente | 404 | |
+
+**`DELETE /api/departments/:id`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Admin no puede eliminar | 403 | |
+| Viewer no puede eliminar | 403 | |
+| Owner puede eliminar | 204 | |
+| Dept no existente | 404 | |
+
+---
+
+## Members API (integración)
+
+### `members.spec.ts`
+**Archivo:** `apps/api/src/test/members.spec.ts`
+**21 tests**
+
+Invite, list, update role y remove de miembros de departamento.
+
+**`GET /api/departments/:id/members`**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner ve miembros de cualquier dept | 200 | |
+| Admin ve miembros de su dept | 200 | |
+| Viewer no puede listar | 403 | |
+| Dept no existente | 404 | |
+| Sin token | 401 | |
+
+**`POST /api/departments/:id/members`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner invita como Admin | 201 | `role = ADMIN` |
+| Owner invita como Viewer | 201 | `role = VIEWER` |
+| Admin invita Viewer en su dept | 201 | |
+| Admin no puede invitar Admin | 403 | Solo Owner puede asignar ADMIN |
+| Admin no puede invitar en otro dept | 403 | |
+| Viewer no puede invitar a nadie | 403 | |
+| Usuario ya tiene rol en el dept | 409 | |
+| Asignar rol al Owner de la org | 403 | No se puede dar rol dept al Owner |
+
+**`PUT /api/departments/:id/members/:userId`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner actualiza rol | 200 | VIEWER → ADMIN |
+| Admin no puede actualizar rol | 403 | Solo Owner |
+| Miembro no existente | 404 | |
+
+**`DELETE /api/departments/:id/members/:userId`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner elimina cualquier miembro | 204 | |
+| Admin elimina Viewer de su dept | 204 | |
+| Admin no puede eliminar otro Admin | 403 | |
+| Viewer no puede eliminar a nadie | 403 | |
+| Miembro no existente | 404 | |
+
+---
+
+## Organizations API (integración)
+
+### `organizations.spec.ts`
+**Archivo:** `apps/api/src/test/organizations.spec.ts`
+**11 tests**
+
+Organización del usuario y gestión de usuarios de la org.
+
+**`GET /api/organizations/me`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner | 200 | `name`, `departments` presentes |
+| Admin | 200 | |
+| Viewer | 200 | |
+| Sin token | 401 | |
+
+**`GET /api/organizations/me/users`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner lista usuarios | 200 | Array no vacío; sin `password` expuesto |
+| Admin lista usuarios | 200 | |
+| Sin token | 401 | |
+
+**`POST /api/organizations/me/users`**
+
+| Test | HTTP | Qué verifica |
+|------|------|-------------|
+| Owner crea usuario en la org | 201 | `id`, `email` presentes; sin `password` |
+| Admin no puede crear | 403 | |
+| Email duplicado | 409 | |
+| Campos requeridos faltantes | 400 | |
+
+---
+
+## Audit Log API (integración)
+
+### `audit.spec.ts`
+**Archivo:** `apps/api/src/test/audit.spec.ts`
+**23 tests**
+
+Registro de auditoría: RBAC de acceso, scoping por dept del Admin, paginación, filtros y shape de la respuesta.
+
+**`GET /api/audit-log` — control de acceso**
+
+| Test | HTTP | Actor |
+|------|------|-------|
+| Owner accede | 200 | `items` y `total` presentes |
+| Admin accede | 200 | |
+| Viewer no puede acceder | 403 | |
+| Sin token | 401 | |
+
+**`GET /api/audit-log` — scoping de Admin**
+
+| Test | Qué verifica |
+|------|-------------|
+| adminEng solo ve entradas de Engineering | Todos los `details.departmentId` = Engineering |
+| adminMkt solo ve entradas de Marketing | Todos los `details.departmentId` = Marketing |
+| Owner ve entradas de todos los depts | Engineering y Marketing en el mismo resultado |
+
+**`GET /api/audit-log` — paginación**
+
+| Test | Qué verifica |
+|------|-------------|
+| `?page=1&limit=5` | `page=1`, `limit=5`, `items.length ≤ 5` |
+| `?page=1&limit=1` | `totalPages` presente y `≥ 1` |
+
+**`GET /api/audit-log` — filtros**
+
+| Test | Qué verifica |
+|------|-------------|
+| `?action=create` | Solo entradas con `action = 'create'` |
+| `?resource=task` | Solo entradas con `resource = 'task'` |
+| `?resource=department` | Solo entradas con `resource = 'department'` |
+| `?userId=<ownerId>` | Solo entradas del owner |
+| `?departmentId=<engId>` | Solo entradas de Engineering |
+| `?action=create&resource=task` | Filtros combinados |
+| `?dateFrom` en el futuro | 0 resultados |
+| `?dateTo` en el pasado | 0 resultados |
+
+**Shape de las entradas**
+
+| Test | Qué verifica |
+|------|-------------|
+| campos obligatorios | `id`, `action`, `resource`, `resourceId`, `userId`, `timestamp`, `details` |
+| sin `password` en `details.body` | Datos sensibles no se exponen |
+
+---
+
 # Dashboard — Documentación de Tests
 
 Suite completa del proyecto Angular (`apps/dashboard`).

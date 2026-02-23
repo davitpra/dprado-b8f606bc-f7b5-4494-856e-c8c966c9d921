@@ -91,7 +91,8 @@ Swagger UI is available at `http://localhost:3000/api/docs` when the API is runn
 
 - **Driver**: `better-sqlite3` via TypeORM (`@nestjs/typeorm ^11`)
 - **Config via env**: `DATABASE_TYPE`, `DATABASE_URL` (path to `.db` file)
-- **Status**: dependencies installed, `TypeOrmModule` not yet wired into `AppModule`
+- `TypeOrmModule` is configured in `apps/api/src/app/database/database.module.ts` and imported by `AppModule`
+- Tests use in-memory SQLite: `DATABASE_URL=':memory:'` (set in `apps/api/src/test-setup.ts`)
 
 ### Environment Variables
 
@@ -105,13 +106,6 @@ JWT_REFRESH_EXPIRATION=7d
 DATABASE_TYPE=better-sqlite3
 DATABASE_URL=./data/taskmanager.db
 ```
-
-### Current State (scaffolding phase)
-
-- `libs/data` interfaces are empty stubs — entities and DTOs not yet implemented
-- `libs/auth` guards/decorators are empty stubs — JWT strategy not yet implemented
-- `AppModule` has empty `imports: []` — no feature modules, no TypeOrmModule
-- Angular `appRoutes` is empty — no pages yet
 
 ---
 
@@ -163,9 +157,13 @@ Does user have OWNER role in user_roles (departmentId = null)?
 | Create/edit/delete Department | ✅ | ❌ | ❌ |
 | Invite user as Admin | ✅ | ❌ | ❌ |
 | Invite user as Viewer | ✅ | ✅ (own dept) | ❌ |
+| List department members | ✅ | ✅ (own dept) | ❌ |
+| Remove member (Viewer only) | ✅ | ✅ (own dept) | ❌ |
+| Update member role | ✅ | ❌ | ❌ |
 | Create task | ✅ | ✅ (own dept) | ❌ |
 | Read all tasks in dept | ✅ | ✅ (own dept) | ❌ |
 | Read/edit/delete own tasks | ✅ | ✅ | ✅ (own dept) |
+| Reorder tasks (kanban) | ✅ | ✅ (own dept) | ❌ |
 | View audit log | ✅ (all) | ✅ (own dept) | ❌ |
 
 ### API Endpoints
@@ -178,6 +176,8 @@ POST   /auth/login          → { access_token, refresh_token }
 POST   /auth/refresh
 
 GET    /organizations/me
+GET    /organizations/me/users     (Owner, Admin)
+POST   /organizations/me/users     (Owner only — create user in org)
 
 POST   /departments
 GET    /departments
@@ -185,8 +185,9 @@ PUT    /departments/:id
 DELETE /departments/:id
 
 POST   /departments/:id/members    (Owner→admin|viewer, Admin→viewer only)
-GET    /departments/:id/members
-DELETE /departments/:id/members/:userId
+GET    /departments/:id/members    (Owner, Admin only — Viewer: 403)
+PUT    /departments/:id/members/:userId  (Owner only — update role)
+DELETE /departments/:id/members/:userId  (Owner: anyone; Admin: Viewer only)
 
 POST   /tasks
 GET    /tasks                      (Viewer sees only own tasks)
@@ -252,3 +253,38 @@ Organization: **Acme Corp** | Departments: **Engineering**, **Marketing**
 - Soft deletes on Task (`deletedAt`)
 - Audit interceptor logs all CRUD actions automatically
 - JWT access token (15m) + refresh token (7d) via Passport.js
+
+### API Testing
+
+Integration tests use `@nestjs/testing` + `supertest` with an in-memory SQLite database (`:memory:`). ThrottlerGuard is disabled by overriding the throttler storage via `getStorageToken()` from `@nestjs/throttler`.
+
+**315 tests across 17 spec files:**
+
+| File | Tests | Focus |
+|------|-------|-------|
+| `apps/api/src/app/access-control/access-control.service.spec.ts` | 27 | Unit — RBAC logic (mocked repos) |
+| `apps/api/src/app/access-control/permissions.guard.spec.ts` | 13 | Unit — PermissionsGuard (resolveDepartmentId, bypass, skip) |
+| `apps/api/src/app/access-control/task-ownership.guard.spec.ts` | 12 | Unit — TaskOwnershipGuard (create/modify, cache, 404) |
+| `apps/api/src/app/audit/audit.service.spec.ts` | 19 | Unit — AuditService log() + findAll() RBAC/filters/pagination |
+| `apps/api/src/app/audit/audit.interceptor.spec.ts` | 30 | Unit — AuditInterceptor skip/action/resource/departmentId/access_denied |
+| `apps/api/src/app/auth/auth.service.spec.ts` | 17 | Unit — AuthService register/login/refresh/validateToken |
+| `apps/api/src/app/auth/jwt.strategy.spec.ts` | 2 | Unit — JwtStrategy validate() (found/not found) |
+| `apps/api/src/app/departments/departments.service.spec.ts` | 14 | Unit — DepartmentsService CRUD (Owner-only guards, org scoping) |
+| `apps/api/src/app/department-members/department-members.service.spec.ts` | 21 | Unit — DepartmentMembersService invite/findAll/remove/updateRole |
+| `apps/api/src/app/organizations/organizations.service.spec.ts` | 8 | Unit — OrganizationsService getByUser/getUsersForOrg/createUser |
+| `apps/api/src/app/tasks/tasks.service.spec.ts` | 34 | Unit — TasksService create/findAll/findOne/update/reorder/remove |
+| `apps/api/src/test/auth.spec.ts` | 18 | Integration — Register, login, refresh, /me, JWT guard |
+| `apps/api/src/test/tasks.spec.ts` | 32 | Integration — Full RBAC matrix × all task endpoints |
+| `apps/api/src/test/departments.spec.ts` | 17 | Integration — Dept CRUD × Owner/Admin/Viewer |
+| `apps/api/src/test/members.spec.ts` | 21 | Integration — Invite, list, update role, remove |
+| `apps/api/src/test/organizations.spec.ts` | 11 | Integration — GET /me, POST /me/users, GET /me/users |
+| `apps/api/src/test/audit.spec.ts` | 19 | Integration — GET /audit-log RBAC, Admin scoping, all filters, entry shape |
+
+**Test infrastructure:**
+- `apps/api/src/test-setup.ts` — sets env vars before any module import
+- `apps/api/src/test/helpers/app.helper.ts` — `createTestApp()` builds a full NestJS test app
+- `apps/api/src/test/helpers/seed.helper.ts` — `seedTestData()` + `getToken()` helpers
+- `apps/api/jest.config.ts` — ts-jest with `module: commonjs`, moduleNameMapper for workspace libs
+- `apps/api/tsconfig.spec.json` — overrides `module`, `moduleResolution`, `isolatedModules` for Jest
+
+**Important:** Login endpoint has a 5 req/60s throttle. Tests obtain `ownerToken` in the outer `beforeAll` and reuse it across describes to stay within the limit.
