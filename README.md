@@ -1,106 +1,521 @@
-# New Nx Repository
+# Secure Task Management System
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A full-stack task management application with Role-Based Access Control (RBAC), built as an NX monorepo with a NestJS API backend and Angular 21 frontend.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+---
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
-## Finish your Nx platform setup
+## Table of Contents
 
-🚀 [Finish setting up your workspace](https://cloud.nx.app/connect/22Z1vPzRai) to get faster builds with remote caching, distributed task execution, and self-healing CI. [Learn more about Nx Cloud](https://nx.dev/ci/intro/why-nx-cloud).
-## Generate a library
+- [Setup Instructions](#setup-instructions)
+- [Architecture Overview](#architecture-overview)
+- [Data Model](#data-model)
+- [Access Control Implementation](#access-control-implementation)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [Bonus Features](#bonus-features)
+- [Future Considerations](#future-considerations)
+- [Tradeoffs & Notes](#tradeoffs--notes)
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+---
+
+## Setup Instructions
+
+### Prerequisites
+
+- Node.js >= 20
+- npm >= 10
+
+### 1. Install dependencies
+
+```bash
+npm install
 ```
 
-## Run tasks
+### 2. Configure environment
 
-To build the library use:
-
-```sh
-npx nx build pkg1
+```bash
+cp .env.example .env
 ```
 
-To run any task with Nx use:
+Edit `.env` with your values:
 
-```sh
-npx nx <target> <project-name>
+```env
+NODE_ENV=development
+PORT=3000
+
+JWT_SECRET=your-secret-key-change-in-production
+JWT_EXPIRATION=15m
+JWT_REFRESH_EXPIRATION=7d
+
+DATABASE_TYPE=better-sqlite3
+DATABASE_URL=./data/taskmanager.db
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+### 3. Seed the database
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Versioning and releasing
-
-To version and release the library use
-
-```
-npx nx release
+```bash
+npm run seed
 ```
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+This creates the Acme Corp organization with sample users, departments, tasks, and permissions. Safe to re-run (idempotent).
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+**Seed credentials:**
 
-## Keep TypeScript project references up to date
+| Email | Password | Role |
+|-------|----------|------|
+| owner@acme.com | Password123! | Organization Owner |
+| admin.eng@acme.com | Password123! | Admin — Engineering |
+| admin.mkt@acme.com | Password123! | Admin — Marketing |
+| viewer1@acme.com | Password123! | Viewer — Engineering |
+| viewer2@acme.com | Password123! | Viewer — Marketing |
+| multi@acme.com | Password123! | Admin — Engineering + Viewer — Marketing |
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+### 4. Run the applications
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+```bash
+# API (http://localhost:3000/api)
+npx nx serve api
 
-```sh
-npx nx sync
+# Angular dashboard (http://localhost:4200) — in a separate terminal
+npx nx serve dashboard
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+- Swagger UI: [http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+- Dashboard: [http://localhost:4200](http://localhost:4200)
 
-```sh
-npx nx sync:check
+The Angular dev server proxies all `/api/*` requests to `http://localhost:3000` — no CORS configuration needed.
+
+---
+
+## Architecture Overview
+
+### Monorepo Layout
+
+```
+task-management/
+├── apps/
+│   ├── api/            NestJS 11 backend (port 3000)
+│   └── dashboard/      Angular 21 frontend (port 4200)
+├── libs/
+│   ├── data/           Shared interfaces, enums, and DTOs
+│   └── auth/           Reusable RBAC guards and decorators
+├── .env.example
+└── package.json
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+### Why NX?
 
-## Nx Cloud
+- **Shared libraries** — `libs/data` and `libs/auth` are consumed by both apps with proper import paths (`@task-management/data`, `@task-management/auth`), eliminating duplication and keeping types in sync.
+- **Affected commands** — `npx nx affected -t test` runs only tests impacted by a change, speeding up CI.
+- **Consistent tooling** — single lint, test, and build pipeline across all projects.
 
-Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+### Shared Libraries
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+| Library | Import path | Contents |
+|---------|-------------|----------|
+| `libs/data` | `@task-management/data` | TypeScript interfaces, enums (TaskStatus, TaskPriority, TaskCategory, UserRole) |
+| `libs/data` | `@task-management/data/dto` | DTOs with class-validator and Swagger decorators (**API-only** — never import from dashboard) |
+| `libs/auth` | `@task-management/auth` | Guards (JwtAuth, Roles, Permissions, TaskOwnership), decorators (@CurrentUser, @Public, @Roles, @RequirePermission) |
 
-### Set up CI (non-Github Actions CI)
+### Backend Modules
 
-**Note:** This is only required if your CI provider is not GitHub Actions.
+| Module | Responsibility |
+|--------|---------------|
+| `AuthModule` | JWT authentication, registration, login, refresh tokens |
+| `DatabaseModule` | TypeORM connection (SQLite dev / PostgreSQL-ready) |
+| `AccessControlModule` | RBAC service, PermissionsGuard, TaskOwnershipGuard |
+| `OrganizationsModule` | Org info, user listing, user creation (Owner only) |
+| `DepartmentsModule` | Department CRUD (Owner only) |
+| `DepartmentMembersModule` | Invite/remove/update members (Owner + Admin) |
+| `TasksModule` | Task CRUD, reorder, filtering, pagination |
+| `AuditModule` | Audit log writes (interceptor) and reads (controller) |
 
-Use the following command to configure a CI workflow for your workspace:
+### Frontend Architecture
 
-```sh
-npx nx g ci-workflow
+Angular 21 standalone components with signal-based state management:
+
+- **Stores** (`TaskStore`, `AuthStore`, `DepartmentStore`, `UIStore`) — global state via Angular signals, `providedIn: 'root'`
+- **Features** — lazy-loaded route modules: `auth`, `tasks`, `departments`, `audit-log`
+- **Auth interceptor** — automatically attaches `Authorization: Bearer <token>` to all API requests
+- **Route guards** — `authGuard`, `ownerGuard`, `departmentAdminGuard`
+
+---
+
+## Data Model
+
+### Entity Relationship Diagram
+
+```
+Organization
+    │
+    ├──< Department >──< UserRoleEntity >──< User
+    │                                          │
+    └─────────────────────────────────────────-┘
+                                               │
+                              Task >───────────┤
+                                    createdBy  │
+                                    assignedTo ┘
+                                               │
+                           AuditLog >──────────┘
+                                      userId
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Entities
 
-## Install Nx Console
+#### Organization
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| name | varchar | |
+| description | varchar | nullable |
+| createdAt | timestamp | |
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+#### Department
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| name | varchar | |
+| description | varchar | nullable |
+| organizationId | UUID | FK → Organization |
+| createdAt | timestamp | |
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+#### User
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| email | varchar | unique |
+| password | varchar | bcrypt (12 rounds), excluded from responses |
+| firstName | varchar | |
+| lastName | varchar | |
+| organizationId | UUID | FK → Organization |
+| createdAt | timestamp | |
+| **isOwner** | computed | getter — checks for OWNER role with departmentId=null |
 
-## Useful links
+#### UserRole (pivot)
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| userId | UUID | FK → User (cascade delete) |
+| role | enum | OWNER \| ADMIN \| VIEWER |
+| departmentId | UUID | FK → Department (nullable — null = org-wide OWNER) |
 
-Learn more:
+Unique constraint: `[userId, departmentId]`
 
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+#### Task
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| title | varchar | |
+| description | text | nullable |
+| status | enum | TODO \| IN_PROGRESS \| DONE |
+| category | enum | WORK \| PERSONAL |
+| priority | enum | LOW \| MEDIUM \| HIGH |
+| position | integer | drag-drop ordering within a status column |
+| dueDate | varchar | ISO 8601 string, nullable |
+| createdById | UUID | FK → User |
+| assignedToId | UUID | FK → User, nullable |
+| departmentId | UUID | FK → Department |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+| deletedAt | timestamp | soft delete — null when active |
 
-And join the Nx community:
+#### Permission
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| action | enum | create \| read \| update \| delete \| invite |
+| resource | enum | task \| department \| user |
+| role | enum | ADMIN \| VIEWER (OWNER bypasses permission table) |
 
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+#### AuditLog
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID | PK |
+| action | varchar | e.g. CREATE, UPDATE, DELETE |
+| resource | varchar | e.g. task, department |
+| resourceId | varchar | |
+| userId | UUID | FK → User |
+| ipAddress | varchar | |
+| details | json | request/response metadata |
+| timestamp | timestamp | indexed |
+
+---
+
+## Access Control Implementation
+
+### Role Hierarchy
+
+```
+Organization
+  └── Owner      → org-wide, stored as UserRole with departmentId = null
+  └── Department A
+        └── Admin  → full access within dept A
+        └── Viewer → read-only own tasks within dept A
+  └── Department B
+        └── Admin  → full access within dept B
+```
+
+- A user can be Admin in dept A and Viewer in dept B simultaneously.
+- OWNER and department-scoped roles are mutually exclusive.
+- The `user.isOwner` computed getter checks for a `UserRole` row with `role = OWNER` and `departmentId = null`.
+
+### RBAC Decision Flow
+
+```
+Request arrives
+      │
+      ▼
+JwtAuthGuard — verify token, load user + roles
+      │
+      ▼
+Is route @Public()?  →  YES  →  allow
+      │
+      NO
+      ▼
+PermissionsGuard — check @RequirePermission() on handler
+      │
+      ├── user.isOwner?  →  YES  →  allow
+      │
+      ├── resolve departmentId from route params / body
+      │
+      ├── find UserRole for this user+department
+      │
+      └── Permission row exists for (action, resource, role)?
+                │
+                YES → allow       NO → 403 Forbidden
+                          │
+                          ▼ (for update/delete tasks)
+                    TaskOwnershipGuard
+                          │
+                    Admin?  → allow
+                    Viewer? → is task.createdById === user.id?
+                                    YES → allow    NO → 403
+```
+
+### RBAC Permissions Matrix
+
+| Action | Owner | Admin | Viewer |
+|--------|:-----:|:-----:|:------:|
+| Create/edit/delete Department | ✅ | ❌ | ❌ |
+| Invite user as Admin | ✅ | ❌ | ❌ |
+| Invite user as Viewer | ✅ | ✅ (own dept) | ❌ |
+| List department members | ✅ | ✅ (own dept) | ❌ |
+| Remove Viewer from dept | ✅ | ✅ (own dept) | ❌ |
+| Update member role | ✅ | ❌ | ❌ |
+| Create task | ✅ | ✅ (own dept) | ❌ |
+| Read all tasks in dept | ✅ | ✅ (own dept) | ❌ |
+| Read/edit/delete own tasks | ✅ | ✅ | ✅ (own dept) |
+| Reorder tasks (kanban) | ✅ | ✅ (own dept) | ❌ |
+| View audit log | ✅ (all) | ✅ (own dept) | ❌ |
+
+### JWT Integration
+
+1. `POST /api/auth/login` returns `{ access_token, refresh_token }`.
+2. `access_token` (15 min) is a signed JWT containing `{ sub: userId, email, isOwner }`.
+3. `JwtAuthGuard` (registered as global `APP_GUARD`) validates every request automatically. Routes opt out via `@Public()`.
+4. `JwtStrategy.validate()` loads the full `User` entity (with roles relation) from the DB on each request, making up-to-date role data available to downstream guards.
+5. `POST /api/auth/refresh` exchanges the `refresh_token` (7 days) for a new `access_token` without re-login.
+
+---
+
+## API Documentation
+
+All endpoints except `/api/auth/*` require `Authorization: Bearer <access_token>`.
+
+Interactive Swagger UI: `http://localhost:3000/api/docs`
+
+### Authentication
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/auth/register` | Public | Register user + create organization |
+| POST | `/api/auth/login` | Public | Login (5 req/60s throttle) |
+| POST | `/api/auth/refresh` | Public | Refresh access token |
+| GET | `/api/auth/me` | JWT | Current user profile + roles |
+
+**Login request/response:**
+```json
+// POST /api/auth/login
+{ "email": "owner@acme.com", "password": "Password123!" }
+
+// 201 Created
+{
+  "access_token": "eyJhbGci...",
+  "refresh_token": "eyJhbGci..."
+}
+```
+
+### Organizations
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/organizations/me` | Owner, Admin, Viewer | Get own organization + departments |
+| GET | `/api/organizations/me/users` | Owner, Admin | List all users in the organization |
+| POST | `/api/organizations/me/users` | Owner | Create a new user in the organization |
+
+### Departments
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/departments` | Owner | Create department |
+| GET | `/api/departments` | Owner, Admin, Viewer | List departments (scoped by role) |
+| PUT | `/api/departments/:id` | Owner | Update department |
+| DELETE | `/api/departments/:id` | Owner | Delete department (204) |
+
+### Department Members
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/departments/:id/members` | Owner (admin\|viewer), Admin (viewer only) | Invite user |
+| GET | `/api/departments/:id/members` | Owner, Admin | List members |
+| PUT | `/api/departments/:id/members/:userId` | Owner | Update member role |
+| DELETE | `/api/departments/:id/members/:userId` | Owner (anyone), Admin (Viewer only) | Remove member |
+
+**Invite request:**
+```json
+// POST /api/departments/dept-uuid/members
+{ "userId": "user-uuid", "role": "viewer" }
+```
+
+### Tasks
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/tasks` | Owner, Admin | Create task |
+| GET | `/api/tasks` | Owner, Admin, Viewer | List tasks (RBAC scoped, filterable) |
+| GET | `/api/tasks/:id` | Owner, Admin, Viewer | Get task by ID |
+| PUT | `/api/tasks/:id` | Owner, Admin, Viewer (own) | Update task |
+| PATCH | `/api/tasks/:id/reorder` | Owner, Admin | Move/reorder task |
+| DELETE | `/api/tasks/:id` | Owner, Admin, Viewer (own) | Soft-delete task |
+
+**Create task request:**
+```json
+// POST /api/tasks
+{
+  "title": "Fix login bug",
+  "description": "Optional description",
+  "status": "todo",
+  "priority": "high",
+  "category": "work",
+  "departmentId": "dept-uuid",
+  "assignedToId": "user-uuid",
+  "dueDate": "2025-12-31"
+}
+```
+
+**List tasks with filters:**
+```
+GET /api/tasks?departmentId=uuid&status=todo&priority=high&search=login&page=1&limit=20
+```
+
+**Reorder task:**
+```json
+// PATCH /api/tasks/:id/reorder
+{ "status": "in_progress", "position": 2 }
+```
+
+### Audit Log
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/audit-log` | Owner (all), Admin (own dept), Viewer (403) | Query audit logs |
+
+```
+GET /api/audit-log?resource=task&action=CREATE&userId=uuid&from=2025-01-01&to=2025-12-31&page=1&limit=50
+```
+
+---
+
+## Testing
+
+### Run all tests
+
+```bash
+# API (unit + integration)
+npx nx test api
+
+# Dashboard (unit)
+npx nx test dashboard
+
+# Shared libraries
+npx nx test data
+npx nx test auth
+
+# All affected tests
+npx nx affected -t test
+```
+
+### Run a single spec file
+
+```bash
+npx nx test api --testFile=apps/api/src/test/tasks.spec.ts
+```
+
+### Test Coverage
+
+**API — 315 tests across 17 spec files:**
+
+| File | Tests | Type |
+|------|------:|------|
+| `access-control.service.spec.ts` | 27 | Unit — RBAC logic |
+| `permissions.guard.spec.ts` | 13 | Unit — PermissionsGuard |
+| `task-ownership.guard.spec.ts` | 12 | Unit — TaskOwnershipGuard |
+| `audit.service.spec.ts` | 19 | Unit — AuditService |
+| `audit.interceptor.spec.ts` | 30 | Unit — AuditInterceptor |
+| `auth.service.spec.ts` | 17 | Unit — AuthService |
+| `jwt.strategy.spec.ts` | 2 | Unit — JwtStrategy |
+| `departments.service.spec.ts` | 14 | Unit — DepartmentsService |
+| `department-members.service.spec.ts` | 21 | Unit — DepartmentMembersService |
+| `organizations.service.spec.ts` | 8 | Unit — OrganizationsService |
+| `tasks.service.spec.ts` | 34 | Unit — TasksService |
+| `auth.spec.ts` | 18 | Integration — Auth endpoints |
+| `tasks.spec.ts` | 32 | Integration — Full RBAC task matrix |
+| `departments.spec.ts` | 17 | Integration — Dept CRUD |
+| `members.spec.ts` | 21 | Integration — Member management |
+| `organizations.spec.ts` | 11 | Integration — Org endpoints |
+| `audit.spec.ts` | 19 | Integration — Audit log RBAC |
+
+Integration tests use `@nestjs/testing` + `supertest` with an **in-memory SQLite** database (`:memory:`), so no external database is needed.
+
+**Dashboard — 417 tests across 35 suites** covering stores, services, guards, components, interceptors, and pipes.
+
+---
+
+## Bonus Features
+
+All bonus features from the assessment have been implemented:
+
+- **Dark/light mode** — system preference detection with manual toggle, persisted to localStorage.
+- **Keyboard shortcuts** — `N` (new task), `/` (focus search), `?` (shortcuts help), `Esc` (close modal).
+- **Task completion visualization** — stats bar showing task counts by status (Todo / In Progress / Done) with percentages.
+- **JWT refresh tokens** — 15m access token + 7d refresh token, transparent refresh in the Angular auth interceptor.
+
+---
+
+## Future Considerations
+
+### Advanced Role Delegation
+- Allow Admins to promote Viewers without Owner intervention.
+- Time-limited role assignments (e.g., temporary admin access).
+
+### Production-Ready Security
+- **CSRF protection** — add `csurf` middleware for cookie-based sessions.
+- **RBAC caching** — cache permission lookups in Redis to avoid repeated DB queries on every request.
+- **Rate limiting** — per-user rate limits (currently global via `@nestjs/throttler`).
+- **Helmet** — add HTTP security headers.
+- **Audit log retention** — automated pruning or archiving of old audit entries.
+
+### Scalability
+- **PostgreSQL** — swap `better-sqlite3` for `pg` driver by updating `DATABASE_TYPE` env var; TypeORM abstracts the rest.
+- **Efficient permission checks** — replace DB lookups with an in-memory permission graph, rebuilt on role changes.
+- **Pagination cursors** — replace offset pagination with cursor-based pagination for large task lists.
+
+---
+
+## Tradeoffs & Notes
+
+- **SQLite in development** — chosen for zero-config local setup. The TypeORM abstraction makes switching to PostgreSQL trivial (env var only).
+- **`synchronize: true` in dev** — TypeORM auto-creates tables on startup. Production deployments would use migration files instead.
+- **Position-based ordering** — task reorder updates all affected positions in a single transaction. At scale, fractional indexing (e.g., Lexorank) would reduce write amplification.
+- **Soft deletes** — tasks use `deletedAt` (TypeORM `@DeleteDateColumn`). Deleted tasks are invisible in all queries by default but remain in the database for audit trail purposes.
+- **Permission table** — Permissions are stored as data rows rather than hardcoded in guards. This allows future runtime configuration without code changes.
