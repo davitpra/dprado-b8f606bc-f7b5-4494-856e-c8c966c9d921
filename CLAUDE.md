@@ -234,16 +234,29 @@ Browse available icons at https://lucide.dev/icons
 
 ### Seed Data (dev credentials)
 
+**Acme Corp** — Departments: Engineering, Marketing, Design
+
 | Email | Password | Role |
 |-------|----------|------|
-| owner@acme.com | Password123! | Organization Owner |
+| owner@acme.com | Password123! | Owner |
 | admin.eng@acme.com | Password123! | Admin — Engineering |
 | admin.mkt@acme.com | Password123! | Admin — Marketing |
-| viewer1@acme.com | Password123! | Viewer — Engineering |
-| viewer2@acme.com | Password123! | Viewer — Marketing |
-| multi@acme.com | Password123! | Admin — Engineering + Viewer — Marketing |
+| admin.design@acme.com | Password123! | Admin — Design |
+| viewer.eng@acme.com | Password123! | Viewer — Engineering |
+| viewer.mkt@acme.com | Password123! | Viewer — Marketing |
+| multi@acme.com | Password123! | Admin(Eng) + Viewer(Mkt) + Viewer(Design) |
 
-Organization: **Acme Corp** | Departments: **Engineering**, **Marketing**
+**Globex Corp** — Departments: Product, Sales, Support
+
+| Email | Password | Role |
+|-------|----------|------|
+| owner@globex.com | Password123! | Owner |
+| admin.product@globex.com | Password123! | Admin — Product |
+| admin.sales@globex.com | Password123! | Admin — Sales |
+| admin.support@globex.com | Password123! | Admin — Support |
+| viewer.product@globex.com | Password123! | Viewer — Product |
+| viewer.sales@globex.com | Password123! | Viewer — Sales |
+| multi@globex.com | Password123! | Admin(Sales) + Viewer(Product) + Viewer(Support) |
 
 ### Key Technical Decisions
 
