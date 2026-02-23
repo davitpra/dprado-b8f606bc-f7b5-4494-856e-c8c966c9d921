@@ -1,0 +1,89 @@
+// Task Management System — Database Schema
+// Paste this at https://dbdiagram.io/d to visualize
+
+Table organizations {
+  id        varchar [pk, note: 'UUID']
+  name      text    [not null]
+  description text  [null]
+  createdAt datetime [not null, default: `now()`]
+}
+
+Table departments {
+  id             varchar  [pk, note: 'UUID']
+  name           text     [not null]
+  description    text     [null]
+  organizationId varchar  [not null, ref: > organizations.id]
+  createdAt      datetime [not null, default: `now()`]
+}
+
+Table users {
+  id             varchar  [pk, note: 'UUID']
+  email          varchar  [not null, unique]
+  password       text     [not null, note: 'bcrypt hash (12 rounds) — excluded from SELECT by default']
+  firstName      text     [not null]
+  lastName       text     [not null]
+  organizationId varchar  [not null, ref: > organizations.id]
+  createdAt      datetime [not null, default: `now()`]
+
+  note: 'isOwner is a computed getter — not a column. Checks user_roles for OWNER role with departmentId = null.'
+}
+
+Table user_roles {
+  id           varchar [pk, note: 'UUID']
+  userId       varchar [not null, ref: > users.id]
+  role         varchar [not null, note: 'owner | admin | viewer']
+  departmentId varchar [null, ref: > departments.id, note: 'null = org-wide OWNER role']
+
+  indexes {
+    (userId, departmentId) [unique]
+  }
+
+  note: 'OWNER rows have departmentId = null. A user can be Admin in dept A and Viewer in dept B simultaneously.'
+}
+
+Table tasks {
+  id           varchar  [pk, note: 'UUID']
+  title        text     [not null]
+  description  text     [null]
+  status       varchar  [not null, default: 'todo', note: 'todo | in_progress | done']
+  category     varchar  [not null, note: 'work | personal']
+  priority     varchar  [not null, default: 'medium', note: 'low | medium | high']
+  position     integer  [not null, default: 0, note: 'drag-and-drop order within a status column']
+  dueDate      text     [null, note: 'ISO 8601 string — stored as text for SQLite/PostgreSQL compatibility']
+  createdById  varchar  [not null, ref: > users.id]
+  assignedToId varchar  [null, ref: > users.id]
+  departmentId varchar  [not null, ref: > departments.id]
+  createdAt    datetime [not null, default: `now()`]
+  updatedAt    datetime [not null]
+  deletedAt    datetime [null, note: 'Soft delete — null when active']
+
+  indexes {
+    (departmentId, status)
+    createdById
+    assignedToId
+  }
+}
+
+Table permissions {
+  id       varchar [pk, note: 'UUID']
+  action   varchar [not null, note: 'create | read | update | delete | invite']
+  resource varchar [not null, note: 'task | department | user']
+  role     varchar [not null, note: 'admin | viewer — OWNER bypasses this table entirely']
+
+  note: 'Defines what actions each role can perform on each resource. Seeded at startup.'
+}
+
+Table audit_logs {
+  id         varchar  [pk, note: 'UUID']
+  action     text     [not null, note: 'e.g. CREATE, UPDATE, DELETE']
+  resource   text     [not null, note: 'e.g. task, department']
+  resourceId text     [not null]
+  userId     varchar  [not null, ref: > users.id]
+  ipAddress  text     [not null]
+  details    text     [not null, note: 'JSON — request/response metadata']
+  timestamp  datetime [not null, default: `now()`]
+
+  indexes {
+    timestamp
+  }
+}
