@@ -61,14 +61,14 @@ This creates the Acme Corp organization with sample users, departments, tasks, a
 
 **Seed credentials:**
 
-| Email | Password | Role |
-|-------|----------|------|
-| owner@acme.com | Password123! | Organization Owner |
-| admin.eng@acme.com | Password123! | Admin — Engineering |
-| admin.mkt@acme.com | Password123! | Admin — Marketing |
-| viewer1@acme.com | Password123! | Viewer — Engineering |
-| viewer2@acme.com | Password123! | Viewer — Marketing |
-| multi@acme.com | Password123! | Admin — Engineering + Viewer — Marketing |
+| Email              | Password     | Role                                     |
+| ------------------ | ------------ | ---------------------------------------- |
+| owner@acme.com     | Password123! | Organization Owner                       |
+| admin.eng@acme.com | Password123! | Admin — Engineering                      |
+| admin.mkt@acme.com | Password123! | Admin — Marketing                        |
+| viewer1@acme.com   | Password123! | Viewer — Engineering                     |
+| viewer2@acme.com   | Password123! | Viewer — Marketing                       |
+| multi@acme.com     | Password123! | Admin — Engineering + Viewer — Marketing |
 
 ### 4. Run the applications
 
@@ -111,24 +111,24 @@ task-management/
 
 ### Shared Libraries
 
-| Library | Import path | Contents |
-|---------|-------------|----------|
-| `libs/data` | `@task-management/data` | TypeScript interfaces, enums (TaskStatus, TaskPriority, TaskCategory, UserRole) |
-| `libs/data` | `@task-management/data/dto` | DTOs with class-validator and Swagger decorators (**API-only** — never import from dashboard) |
-| `libs/auth` | `@task-management/auth` | Guards (JwtAuth, Roles, Permissions, TaskOwnership), decorators (@CurrentUser, @Public, @Roles, @RequirePermission) |
+| Library     | Import path                 | Contents                                                                                                            |
+| ----------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `libs/data` | `@task-management/data`     | TypeScript interfaces, enums (TaskStatus, TaskPriority, TaskCategory, UserRole)                                     |
+| `libs/data` | `@task-management/data/dto` | DTOs with class-validator and Swagger decorators (**API-only** — never import from dashboard)                       |
+| `libs/auth` | `@task-management/auth`     | Guards (JwtAuth, Roles, Permissions, TaskOwnership), decorators (@CurrentUser, @Public, @Roles, @RequirePermission) |
 
 ### Backend Modules
 
-| Module | Responsibility |
-|--------|---------------|
-| `AuthModule` | JWT authentication, registration, login, refresh tokens |
-| `DatabaseModule` | TypeORM connection (SQLite dev / PostgreSQL-ready) |
-| `AccessControlModule` | RBAC service, PermissionsGuard, TaskOwnershipGuard |
-| `OrganizationsModule` | Org info, user listing, user creation (Owner only) |
-| `DepartmentsModule` | Department CRUD (Owner only) |
-| `DepartmentMembersModule` | Invite/remove/update members (Owner + Admin) |
-| `TasksModule` | Task CRUD, reorder, filtering, pagination |
-| `AuditModule` | Audit log writes (interceptor) and reads (controller) |
+| Module                    | Responsibility                                          |
+| ------------------------- | ------------------------------------------------------- |
+| `AuthModule`              | JWT authentication, registration, login, refresh tokens |
+| `DatabaseModule`          | TypeORM connection (SQLite dev / PostgreSQL-ready)      |
+| `AccessControlModule`     | RBAC service, PermissionsGuard, TaskOwnershipGuard      |
+| `OrganizationsModule`     | Org info, user listing, user creation (Owner only)      |
+| `DepartmentsModule`       | Department CRUD (Owner only)                            |
+| `DepartmentMembersModule` | Invite/remove/update members (Owner + Admin)            |
+| `TasksModule`             | Task CRUD, reorder, filtering, pagination               |
+| `AuditModule`             | Audit log writes (interceptor) and reads (controller)   |
 
 ### Frontend Architecture
 
@@ -145,99 +145,93 @@ Angular 21 standalone components with signal-based state management:
 
 ### Entity Relationship Diagram
 
-```
-Organization
-    │
-    ├──< Department >──< UserRoleEntity >──< User
-    │                                          │
-    └─────────────────────────────────────────-┘
-                                               │
-                              Task >───────────┤
-                                    createdBy  │
-                                    assignedTo ┘
-                                               │
-                           AuditLog >──────────┘
-                                      userId
-```
+![ERM Diagram](./ERM%20Diagram.svg)
 
 ### Entities
 
+#### Permission
+
+| Column   | Type | Notes                                             |
+| -------- | ---- | ------------------------------------------------- |
+| id       | UUID | PK                                                |
+| action   | enum | create \| read \| update \| delete \| invite      |
+| resource | enum | task \| department \| user                        |
+| role     | enum | ADMIN \| VIEWER (OWNER bypasses permission table) |
+
 #### Organization
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK |
-| name | varchar | |
-| description | varchar | nullable |
-| createdAt | timestamp | |
+
+| Column      | Type      | Notes    |
+| ----------- | --------- | -------- |
+| id          | UUID      | PK       |
+| name        | varchar   |          |
+| description | varchar   | nullable |
+| createdAt   | timestamp |          |
 
 #### Department
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK |
-| name | varchar | |
-| description | varchar | nullable |
-| organizationId | UUID | FK → Organization |
-| createdAt | timestamp | |
+
+| Column         | Type      | Notes             |
+| -------------- | --------- | ----------------- |
+| id             | UUID      | PK                |
+| name           | varchar   |                   |
+| description    | varchar   | nullable          |
+| organizationId | UUID      | FK → Organization |
+| createdAt      | timestamp |                   |
 
 #### User
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK |
-| email | varchar | unique |
-| password | varchar | bcrypt (12 rounds), excluded from responses |
-| firstName | varchar | |
-| lastName | varchar | |
-| organizationId | UUID | FK → Organization |
-| createdAt | timestamp | |
-| **isOwner** | computed | getter — checks for OWNER role with departmentId=null |
+
+| Column         | Type      | Notes                                                 |
+| -------------- | --------- | ----------------------------------------------------- |
+| id             | UUID      | PK                                                    |
+| email          | varchar   | unique                                                |
+| password       | varchar   | bcrypt (12 rounds), excluded from responses           |
+| firstName      | varchar   |                                                       |
+| lastName       | varchar   |                                                       |
+| organizationId | UUID      | FK → Organization                                     |
+| createdAt      | timestamp |                                                       |
+| **isOwner**    | computed  | getter — checks for OWNER role with departmentId=null |
 
 #### UserRole (pivot)
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK |
-| userId | UUID | FK → User (cascade delete) |
-| role | enum | OWNER \| ADMIN \| VIEWER |
+
+| Column       | Type | Notes                                              |
+| ------------ | ---- | -------------------------------------------------- |
+| id           | UUID | PK                                                 |
+| userId       | UUID | FK → User (cascade delete)                         |
+| role         | enum | OWNER \| ADMIN \| VIEWER                           |
 | departmentId | UUID | FK → Department (nullable — null = org-wide OWNER) |
 
 Unique constraint: `[userId, departmentId]`
 
 #### Task
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK |
-| title | varchar | |
-| description | text | nullable |
-| status | enum | TODO \| IN_PROGRESS \| DONE |
-| category | enum | WORK \| PERSONAL |
-| priority | enum | LOW \| MEDIUM \| HIGH |
-| position | integer | drag-drop ordering within a status column |
-| dueDate | varchar | ISO 8601 string, nullable |
-| createdById | UUID | FK → User |
-| assignedToId | UUID | FK → User, nullable |
-| departmentId | UUID | FK → Department |
-| createdAt | timestamp | |
-| updatedAt | timestamp | |
-| deletedAt | timestamp | soft delete — null when active |
 
-#### Permission
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK |
-| action | enum | create \| read \| update \| delete \| invite |
-| resource | enum | task \| department \| user |
-| role | enum | ADMIN \| VIEWER (OWNER bypasses permission table) |
+| Column       | Type      | Notes                                     |
+| ------------ | --------- | ----------------------------------------- |
+| id           | UUID      | PK                                        |
+| title        | varchar   |                                           |
+| description  | text      | nullable                                  |
+| status       | enum      | TODO \| IN_PROGRESS \| DONE               |
+| category     | enum      | WORK \| PERSONAL                          |
+| priority     | enum      | LOW \| MEDIUM \| HIGH                     |
+| position     | integer   | drag-drop ordering within a status column |
+| dueDate      | varchar   | ISO 8601 string, nullable                 |
+| createdById  | UUID      | FK → User                                 |
+| assignedToId | UUID      | FK → User, nullable                       |
+| departmentId | UUID      | FK → Department                           |
+| createdAt    | timestamp |                                           |
+| updatedAt    | timestamp |                                           |
+| deletedAt    | timestamp | soft delete — null when active            |
 
 #### AuditLog
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID | PK |
-| action | varchar | e.g. CREATE, UPDATE, DELETE |
-| resource | varchar | e.g. task, department |
-| resourceId | varchar | |
-| userId | UUID | FK → User |
-| ipAddress | varchar | |
-| details | json | request/response metadata |
-| timestamp | timestamp | indexed |
+
+| Column     | Type      | Notes                       |
+| ---------- | --------- | --------------------------- |
+| id         | UUID      | PK                          |
+| action     | varchar   | e.g. CREATE, UPDATE, DELETE |
+| resource   | varchar   | e.g. task, department       |
+| resourceId | varchar   |                             |
+| userId     | UUID      | FK → User                   |
+| ipAddress  | varchar   |                             |
+| details    | json      | request/response metadata   |
+| timestamp  | timestamp | indexed                     |
 
 ---
 
@@ -294,19 +288,19 @@ PermissionsGuard — check @RequirePermission() on handler
 
 ### RBAC Permissions Matrix
 
-| Action | Owner | Admin | Viewer |
-|--------|:-----:|:-----:|:------:|
-| Create/edit/delete Department | ✅ | ❌ | ❌ |
-| Invite user as Admin | ✅ | ❌ | ❌ |
-| Invite user as Viewer | ✅ | ✅ (own dept) | ❌ |
-| List department members | ✅ | ✅ (own dept) | ❌ |
-| Remove Viewer from dept | ✅ | ✅ (own dept) | ❌ |
-| Update member role | ✅ | ❌ | ❌ |
-| Create task | ✅ | ✅ (own dept) | ❌ |
-| Read all tasks in dept | ✅ | ✅ (own dept) | ❌ |
-| Read/edit/delete own tasks | ✅ | ✅ | ✅ (own dept) |
-| Reorder tasks (kanban) | ✅ | ✅ (own dept) | ❌ |
-| View audit log | ✅ (all) | ✅ (own dept) | ❌ |
+| Action                        |  Owner   |     Admin     |    Viewer     |
+| ----------------------------- | :------: | :-----------: | :-----------: |
+| Create/edit/delete Department |    ✅    |      ❌       |      ❌       |
+| Invite user as Admin          |    ✅    |      ❌       |      ❌       |
+| Invite user as Viewer         |    ✅    | ✅ (own dept) |      ❌       |
+| List department members       |    ✅    | ✅ (own dept) |      ❌       |
+| Remove Viewer from dept       |    ✅    | ✅ (own dept) |      ❌       |
+| Update member role            |    ✅    |      ❌       |      ❌       |
+| Create task                   |    ✅    | ✅ (own dept) |      ❌       |
+| Read all tasks in dept        |    ✅    | ✅ (own dept) |      ❌       |
+| Read/edit/delete own tasks    |    ✅    |      ✅       | ✅ (own dept) |
+| Reorder tasks (kanban)        |    ✅    | ✅ (own dept) |      ❌       |
+| View audit log                | ✅ (all) | ✅ (own dept) |      ❌       |
 
 ### JWT Integration
 
@@ -326,14 +320,15 @@ Interactive Swagger UI: `http://localhost:3000/api/docs`
 
 ### Authentication
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/auth/register` | Public | Register user + create organization |
-| POST | `/api/auth/login` | Public | Login (5 req/60s throttle) |
-| POST | `/api/auth/refresh` | Public | Refresh access token |
-| GET | `/api/auth/me` | JWT | Current user profile + roles |
+| Method | Path                 | Auth   | Description                         |
+| ------ | -------------------- | ------ | ----------------------------------- |
+| POST   | `/api/auth/register` | Public | Register user + create organization |
+| POST   | `/api/auth/login`    | Public | Login (5 req/60s throttle)          |
+| POST   | `/api/auth/refresh`  | Public | Refresh access token                |
+| GET    | `/api/auth/me`       | JWT    | Current user profile + roles        |
 
 **Login request/response:**
+
 ```json
 // POST /api/auth/login
 { "email": "owner@acme.com", "password": "Password123!" }
@@ -347,31 +342,32 @@ Interactive Swagger UI: `http://localhost:3000/api/docs`
 
 ### Organizations
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/organizations/me` | Owner, Admin, Viewer | Get own organization + departments |
-| GET | `/api/organizations/me/users` | Owner, Admin | List all users in the organization |
-| POST | `/api/organizations/me/users` | Owner | Create a new user in the organization |
+| Method | Path                          | Auth                 | Description                           |
+| ------ | ----------------------------- | -------------------- | ------------------------------------- |
+| GET    | `/api/organizations/me`       | Owner, Admin, Viewer | Get own organization + departments    |
+| GET    | `/api/organizations/me/users` | Owner, Admin         | List all users in the organization    |
+| POST   | `/api/organizations/me/users` | Owner                | Create a new user in the organization |
 
 ### Departments
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/departments` | Owner | Create department |
-| GET | `/api/departments` | Owner, Admin, Viewer | List departments (scoped by role) |
-| PUT | `/api/departments/:id` | Owner | Update department |
-| DELETE | `/api/departments/:id` | Owner | Delete department (204) |
+| Method | Path                   | Auth                 | Description                       |
+| ------ | ---------------------- | -------------------- | --------------------------------- |
+| POST   | `/api/departments`     | Owner                | Create department                 |
+| GET    | `/api/departments`     | Owner, Admin, Viewer | List departments (scoped by role) |
+| PUT    | `/api/departments/:id` | Owner                | Update department                 |
+| DELETE | `/api/departments/:id` | Owner                | Delete department (204)           |
 
 ### Department Members
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/departments/:id/members` | Owner (admin\|viewer), Admin (viewer only) | Invite user |
-| GET | `/api/departments/:id/members` | Owner, Admin | List members |
-| PUT | `/api/departments/:id/members/:userId` | Owner | Update member role |
-| DELETE | `/api/departments/:id/members/:userId` | Owner (anyone), Admin (Viewer only) | Remove member |
+| Method | Path                                   | Auth                                       | Description        |
+| ------ | -------------------------------------- | ------------------------------------------ | ------------------ |
+| POST   | `/api/departments/:id/members`         | Owner (admin\|viewer), Admin (viewer only) | Invite user        |
+| GET    | `/api/departments/:id/members`         | Owner, Admin                               | List members       |
+| PUT    | `/api/departments/:id/members/:userId` | Owner                                      | Update member role |
+| DELETE | `/api/departments/:id/members/:userId` | Owner (anyone), Admin (Viewer only)        | Remove member      |
 
 **Invite request:**
+
 ```json
 // POST /api/departments/dept-uuid/members
 { "userId": "user-uuid", "role": "viewer" }
@@ -379,16 +375,17 @@ Interactive Swagger UI: `http://localhost:3000/api/docs`
 
 ### Tasks
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/api/tasks` | Owner, Admin | Create task |
-| GET | `/api/tasks` | Owner, Admin, Viewer | List tasks (RBAC scoped, filterable) |
-| GET | `/api/tasks/:id` | Owner, Admin, Viewer | Get task by ID |
-| PUT | `/api/tasks/:id` | Owner, Admin, Viewer (own) | Update task |
-| PATCH | `/api/tasks/:id/reorder` | Owner, Admin | Move/reorder task |
-| DELETE | `/api/tasks/:id` | Owner, Admin, Viewer (own) | Soft-delete task |
+| Method | Path                     | Auth                       | Description                          |
+| ------ | ------------------------ | -------------------------- | ------------------------------------ |
+| POST   | `/api/tasks`             | Owner, Admin               | Create task                          |
+| GET    | `/api/tasks`             | Owner, Admin, Viewer       | List tasks (RBAC scoped, filterable) |
+| GET    | `/api/tasks/:id`         | Owner, Admin, Viewer       | Get task by ID                       |
+| PUT    | `/api/tasks/:id`         | Owner, Admin, Viewer (own) | Update task                          |
+| PATCH  | `/api/tasks/:id/reorder` | Owner, Admin               | Move/reorder task                    |
+| DELETE | `/api/tasks/:id`         | Owner, Admin, Viewer (own) | Soft-delete task                     |
 
 **Create task request:**
+
 ```json
 // POST /api/tasks
 {
@@ -404,11 +401,13 @@ Interactive Swagger UI: `http://localhost:3000/api/docs`
 ```
 
 **List tasks with filters:**
+
 ```
 GET /api/tasks?departmentId=uuid&status=todo&priority=high&search=login&page=1&limit=20
 ```
 
 **Reorder task:**
+
 ```json
 // PATCH /api/tasks/:id/reorder
 { "status": "in_progress", "position": 2 }
@@ -416,9 +415,9 @@ GET /api/tasks?departmentId=uuid&status=todo&priority=high&search=login&page=1&l
 
 ### Audit Log
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/audit-log` | Owner (all), Admin (own dept), Viewer (403) | Query audit logs |
+| Method | Path             | Auth                                        | Description      |
+| ------ | ---------------- | ------------------------------------------- | ---------------- |
+| GET    | `/api/audit-log` | Owner (all), Admin (own dept), Viewer (403) | Query audit logs |
 
 ```
 GET /api/audit-log?resource=task&action=CREATE&userId=uuid&from=2025-01-01&to=2025-12-31&page=1&limit=50
@@ -455,25 +454,25 @@ npx nx test api --testFile=apps/api/src/test/tasks.spec.ts
 
 **API — 315 tests across 17 spec files:**
 
-| File | Tests | Type |
-|------|------:|------|
-| `access-control.service.spec.ts` | 27 | Unit — RBAC logic |
-| `permissions.guard.spec.ts` | 13 | Unit — PermissionsGuard |
-| `task-ownership.guard.spec.ts` | 12 | Unit — TaskOwnershipGuard |
-| `audit.service.spec.ts` | 19 | Unit — AuditService |
-| `audit.interceptor.spec.ts` | 30 | Unit — AuditInterceptor |
-| `auth.service.spec.ts` | 17 | Unit — AuthService |
-| `jwt.strategy.spec.ts` | 2 | Unit — JwtStrategy |
-| `departments.service.spec.ts` | 14 | Unit — DepartmentsService |
-| `department-members.service.spec.ts` | 21 | Unit — DepartmentMembersService |
-| `organizations.service.spec.ts` | 8 | Unit — OrganizationsService |
-| `tasks.service.spec.ts` | 34 | Unit — TasksService |
-| `auth.spec.ts` | 18 | Integration — Auth endpoints |
-| `tasks.spec.ts` | 32 | Integration — Full RBAC task matrix |
-| `departments.spec.ts` | 17 | Integration — Dept CRUD |
-| `members.spec.ts` | 21 | Integration — Member management |
-| `organizations.spec.ts` | 11 | Integration — Org endpoints |
-| `audit.spec.ts` | 19 | Integration — Audit log RBAC |
+| File                                 | Tests | Type                                |
+| ------------------------------------ | ----: | ----------------------------------- |
+| `access-control.service.spec.ts`     |    27 | Unit — RBAC logic                   |
+| `permissions.guard.spec.ts`          |    13 | Unit — PermissionsGuard             |
+| `task-ownership.guard.spec.ts`       |    12 | Unit — TaskOwnershipGuard           |
+| `audit.service.spec.ts`              |    19 | Unit — AuditService                 |
+| `audit.interceptor.spec.ts`          |    30 | Unit — AuditInterceptor             |
+| `auth.service.spec.ts`               |    17 | Unit — AuthService                  |
+| `jwt.strategy.spec.ts`               |     2 | Unit — JwtStrategy                  |
+| `departments.service.spec.ts`        |    14 | Unit — DepartmentsService           |
+| `department-members.service.spec.ts` |    21 | Unit — DepartmentMembersService     |
+| `organizations.service.spec.ts`      |     8 | Unit — OrganizationsService         |
+| `tasks.service.spec.ts`              |    34 | Unit — TasksService                 |
+| `auth.spec.ts`                       |    18 | Integration — Auth endpoints        |
+| `tasks.spec.ts`                      |    32 | Integration — Full RBAC task matrix |
+| `departments.spec.ts`                |    17 | Integration — Dept CRUD             |
+| `members.spec.ts`                    |    21 | Integration — Member management     |
+| `organizations.spec.ts`              |    11 | Integration — Org endpoints         |
+| `audit.spec.ts`                      |    19 | Integration — Audit log RBAC        |
 
 Integration tests use `@nestjs/testing` + `supertest` with an **in-memory SQLite** database (`:memory:`), so no external database is needed.
 
@@ -495,10 +494,12 @@ All bonus features from the assessment have been implemented:
 ## Future Considerations
 
 ### Advanced Role Delegation
+
 - Allow Admins to promote Viewers without Owner intervention.
 - Time-limited role assignments (e.g., temporary admin access).
 
 ### Production-Ready Security
+
 - **CSRF protection** — add `csurf` middleware for cookie-based sessions.
 - **RBAC caching** — cache permission lookups in Redis to avoid repeated DB queries on every request.
 - **Rate limiting** — per-user rate limits (currently global via `@nestjs/throttler`).
@@ -506,6 +507,7 @@ All bonus features from the assessment have been implemented:
 - **Audit log retention** — automated pruning or archiving of old audit entries.
 
 ### Scalability
+
 - **PostgreSQL** — swap `better-sqlite3` for `pg` driver by updating `DATABASE_TYPE` env var; TypeORM abstracts the rest.
 - **Efficient permission checks** — replace DB lookups with an in-memory permission graph, rebuilt on role changes.
 - **Pagination cursors** — replace offset pagination with cursor-based pagination for large task lists.
