@@ -3,7 +3,7 @@
   "compileOnSave": false,
   "files": [],
   "references": [
-{
+    {
       "path": "./apps/api"
     },
     {

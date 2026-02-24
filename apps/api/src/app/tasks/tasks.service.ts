@@ -245,18 +245,6 @@ export class TasksService {
       );
     }
 
-    // Viewers cannot reorder — only Owner/Admin
-    if (!this.acl.isOwner(user)) {
-      const role = await this.acl.getUserRoleForDepartment(
-        user.id,
-        task.departmentId,
-        user,
-      );
-      if (role !== UserRole.ADMIN) {
-        throw new ForbiddenException('Only owners and admins can reorder tasks');
-      }
-    }
-
     task.status = dto.status;
     task.position = dto.position;
     await this.taskRepo.save(task);
