@@ -22,6 +22,8 @@ export const envValidationSchema = Joi.object({
     'string.min': '"JWT_SECRET" must be at least 16 characters',
   }),
 
+  CORS_ORIGIN: Joi.string().uri().default('http://localhost:4200'),
+
   JWT_EXPIRATION: Joi.string().default('15m'),
 
   JWT_REFRESH_EXPIRATION: Joi.string().default('7d'),

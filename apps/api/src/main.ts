@@ -19,7 +19,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: process.env['CORS_ORIGIN'] || 'http://localhost:4200',
   });
 
   const config = new DocumentBuilder()
