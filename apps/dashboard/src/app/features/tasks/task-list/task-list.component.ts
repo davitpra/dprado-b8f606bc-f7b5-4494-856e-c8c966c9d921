@@ -88,13 +88,15 @@ export class TaskListComponent {
     // Update positions for tasks with the same status as the dragged task
     const reorderedTask = localTasks[event.currentIndex];
     const status = reorderedTask.status;
-    const sameStatusTasks = localTasks
-      .filter((t) => t.status === status)
-      .map((t, i) => ({ ...t, position: i }));
+    const sameStatusBefore = localTasks.filter((t) => t.status === status);
+    const oldPositions = new Map(sameStatusBefore.map((t) => [t.id, t.position]));
+    const sameStatusTasks = sameStatusBefore.map((t, i) => ({ ...t, position: i }));
 
     this.taskStore.reorderTasks(sameStatusTasks);
     for (const t of sameStatusTasks) {
-      this.taskService.reorderTask(t.id, { status: t.status, position: t.position });
+      if (t.position !== oldPositions.get(t.id)) {
+        this.taskService.reorderTask(t.id, { status: t.status, position: t.position });
+      }
     }
   }
 }

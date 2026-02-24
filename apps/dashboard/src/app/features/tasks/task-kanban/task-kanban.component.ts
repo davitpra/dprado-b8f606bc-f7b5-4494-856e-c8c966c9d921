@@ -52,11 +52,12 @@ export class TaskKanbanComponent {
 
     if (event.previousContainer === event.container) {
       const items = [...event.container.data];
+      const oldPositions = new Map(items.map((t) => [t.id, t.position]));
       moveItemInArray(items, event.previousIndex, event.currentIndex);
       const updated = items.map((t, i) => ({ ...t, position: i }));
       this.taskStore.reorderTasks(updated);
       for (const t of updated) {
-        if (this.canDragTask(t)) {
+        if (t.position !== oldPositions.get(t.id) && this.canDragTask(t)) {
           this.taskService.reorderTask(t.id, { status: t.status, position: t.position });
         }
       }

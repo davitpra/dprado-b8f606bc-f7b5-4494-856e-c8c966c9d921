@@ -9,6 +9,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '@task-management/auth';
 import {
@@ -79,6 +80,7 @@ export class TasksController {
   }
 
   /** PATCH /api/tasks/:id/reorder — reorder/move a task. */
+  @SkipThrottle()
   @Patch(':id/reorder')
   @ApiOperation({ summary: 'Reorder a task (change status column and/or position)' })
   @ApiParam({ name: 'id', description: 'Task UUID' })
