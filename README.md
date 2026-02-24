@@ -61,27 +61,27 @@ This creates two organizations (**Acme Corp** and **Globex Corp**), each with th
 
 **Acme Corp** — Departments: Engineering, Marketing, Design
 
-| Email                  | Password     | Role                                              |
-| ---------------------- | ------------ | ------------------------------------------------- |
-| owner@acme.com         | Password123! | Owner                                             |
-| admin.eng@acme.com     | Password123! | Admin — Engineering                               |
-| admin.mkt@acme.com     | Password123! | Admin — Marketing                                 |
-| admin.design@acme.com  | Password123! | Admin — Design                                    |
-| viewer.eng@acme.com    | Password123! | Viewer — Engineering                              |
-| viewer.mkt@acme.com    | Password123! | Viewer — Marketing                                |
-| multi@acme.com         | Password123! | Admin (Engineering) + Viewer (Marketing) + Viewer (Design) |
+| Email                 | Password     | Role                                                       |
+| --------------------- | ------------ | ---------------------------------------------------------- |
+| owner@acme.com        | Password123! | Owner                                                      |
+| admin.eng@acme.com    | Password123! | Admin — Engineering                                        |
+| admin.mkt@acme.com    | Password123! | Admin — Marketing                                          |
+| admin.design@acme.com | Password123! | Admin — Design                                             |
+| viewer.eng@acme.com   | Password123! | Viewer — Engineering                                       |
+| viewer.mkt@acme.com   | Password123! | Viewer — Marketing                                         |
+| multi@acme.com        | Password123! | Admin (Engineering) + Viewer (Marketing) + Viewer (Design) |
 
 **Globex Corp** — Departments: Product, Sales, Support
 
-| Email                    | Password     | Role                                               |
-| ------------------------ | ------------ | -------------------------------------------------- |
-| owner@globex.com         | Password123! | Owner                                              |
-| admin.product@globex.com | Password123! | Admin — Product                                    |
-| admin.sales@globex.com   | Password123! | Admin — Sales                                      |
-| admin.support@globex.com | Password123! | Admin — Support                                    |
-| viewer.product@globex.com| Password123! | Viewer — Product                                   |
-| viewer.sales@globex.com  | Password123! | Viewer — Sales                                     |
-| multi@globex.com         | Password123! | Admin (Sales) + Viewer (Product) + Viewer (Support) |
+| Email                     | Password     | Role                                                |
+| ------------------------- | ------------ | --------------------------------------------------- |
+| owner@globex.com          | Password123! | Owner                                               |
+| admin.product@globex.com  | Password123! | Admin — Product                                     |
+| admin.sales@globex.com    | Password123! | Admin — Sales                                       |
+| admin.support@globex.com  | Password123! | Admin — Support                                     |
+| viewer.product@globex.com | Password123! | Viewer — Product                                    |
+| viewer.sales@globex.com   | Password123! | Viewer — Sales                                      |
+| multi@globex.com          | Password123! | Admin (Sales) + Viewer (Product) + Viewer (Support) |
 
 ### 4. Run the applications
 
@@ -269,34 +269,49 @@ Organization
 ### RBAC Decision Flow
 
 ```
-Request arrives
-      │
-      ▼
-JwtAuthGuard — verify token, load user + roles
-      │
-      ▼
-Is route @Public()?  →  YES  →  allow
-      │
-      NO
-      ▼
-PermissionsGuard — check @RequirePermission() on handler
-      │
-      ├── user.isOwner?  →  YES  →  allow
-      │
-      ├── resolve departmentId from route params / body
-      │
-      ├── find UserRole for this user+department
-      │
-      └── Permission row exists for (action, resource, role)?
-                │
-                YES → allow       NO → 403 Forbidden
-                          │
-                          ▼ (for update/delete tasks)
-                    TaskOwnershipGuard
-                          │
-                    Admin?  → allow
-                    Viewer? → is task.createdById === user.id?
-                                    YES → allow    NO → 403
+1st Layer JwtAuthGuard
+
+A[Request arrives] --> B[JwtAuthGuard --> Validate token --> Load user + roles]
+
+B --> C{Route is @Public()?}
+
+C -->|YES| ALLOW1[✅ Allow Request]
+C -->|NO| D[PermissionsGuard]
+
+2nd Layer Permission Guard
+
+D --> E{User is Organization Owner?}
+
+E -->|YES| ALLOW2[✅ Allow Request]
+E -->|NO| F[Resolve departmentId from params/body/query]
+
+F --> G{departmentId found?}
+
+G -->|NO| DENY1[❌ 403 Forbidden]
+G -->|YES| H[Find UserRole\n(userId + departmentId)]
+
+H --> I{UserRole exists?}
+
+I -->|NO| DENY2[❌ 403 Forbidden]
+I -->|YES| J[Check Permission\n(action, resource, role)]
+
+J --> K{Permission exists?}
+
+K -->|NO| DENY3[❌ 403 Forbidden]
+K -->|YES| L{Is operation UPDATE or DELETE on owned resource?}
+
+L -->|NO| ALLOW3[✅ Allow Request]
+L -->|YES| M[TaskOwnershipGuard]
+
+3rd Layer TaskOwnershipGuard
+
+M --> N{Role is Admin?}
+
+N -->|YES| ALLOW4[✅ Allow Request]
+N -->|NO| O{Role is Viewer AND owns resource?}
+
+O -->|YES| ALLOW5[✅ Allow Request]
+O -->|NO| DENY4[❌ 403 Forbidden]
 ```
 
 ### RBAC Permissions Matrix
