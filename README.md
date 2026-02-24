@@ -57,18 +57,31 @@ DATABASE_URL=./data/taskmanager.db
 npm run seed
 ```
 
-This creates the Acme Corp organization with sample users, departments, tasks, and permissions. Safe to re-run (idempotent).
+This creates two organizations (**Acme Corp** and **Globex Corp**), each with three departments, 7 users, and sample tasks. Safe to re-run (idempotent — skips if both organizations already exist).
 
-**Seed credentials:**
+**Acme Corp** — Departments: Engineering, Marketing, Design
 
-| Email              | Password     | Role                                     |
-| ------------------ | ------------ | ---------------------------------------- |
-| owner@acme.com     | Password123! | Organization Owner                       |
-| admin.eng@acme.com | Password123! | Admin — Engineering                      |
-| admin.mkt@acme.com | Password123! | Admin — Marketing                        |
-| viewer1@acme.com   | Password123! | Viewer — Engineering                     |
-| viewer2@acme.com   | Password123! | Viewer — Marketing                       |
-| multi@acme.com     | Password123! | Admin — Engineering + Viewer — Marketing |
+| Email                  | Password     | Role                                              |
+| ---------------------- | ------------ | ------------------------------------------------- |
+| owner@acme.com         | Password123! | Owner                                             |
+| admin.eng@acme.com     | Password123! | Admin — Engineering                               |
+| admin.mkt@acme.com     | Password123! | Admin — Marketing                                 |
+| admin.design@acme.com  | Password123! | Admin — Design                                    |
+| viewer.eng@acme.com    | Password123! | Viewer — Engineering                              |
+| viewer.mkt@acme.com    | Password123! | Viewer — Marketing                                |
+| multi@acme.com         | Password123! | Admin (Engineering) + Viewer (Marketing) + Viewer (Design) |
+
+**Globex Corp** — Departments: Product, Sales, Support
+
+| Email                    | Password     | Role                                               |
+| ------------------------ | ------------ | -------------------------------------------------- |
+| owner@globex.com         | Password123! | Owner                                              |
+| admin.product@globex.com | Password123! | Admin — Product                                    |
+| admin.sales@globex.com   | Password123! | Admin — Sales                                      |
+| admin.support@globex.com | Password123! | Admin — Support                                    |
+| viewer.product@globex.com| Password123! | Viewer — Product                                   |
+| viewer.sales@globex.com  | Password123! | Viewer — Sales                                     |
+| multi@globex.com         | Password123! | Admin (Sales) + Viewer (Product) + Viewer (Support) |
 
 ### 4. Run the applications
 
@@ -151,12 +164,12 @@ Angular 21 standalone components with signal-based state management:
 
 #### Permission
 
-| Column   | Type | Notes                                             |
-| -------- | ---- | ------------------------------------------------- |
-| id       | UUID | PK                                                |
-| action   | enum | create \| read \| update \| delete \| invite      |
-| resource | enum | task \| department \| user                        |
-| role     | enum | ADMIN \| VIEWER (OWNER bypasses permission table) |
+| Column   | Type    | Notes                                             |
+| -------- | ------- | ------------------------------------------------- |
+| id       | UUID    | PK                                                |
+| action   | varchar | create \| read \| update \| delete \| invite      |
+| resource | varchar | task \| department \| user                        |
+| role     | varchar | ADMIN \| VIEWER (OWNER bypasses permission table) |
 
 #### Organization
 
@@ -500,7 +513,8 @@ All bonus features from the assessment have been implemented:
 
 ### Production-Ready Security
 
-- **CSRF protection** — add `csurf` middleware for cookie-based sessions.
+- **HttpOnly cookie storage for JWT** — move the access token from `localStorage`/memory to an `HttpOnly; Secure; SameSite=Strict` cookie so it is inaccessible to JavaScript, eliminating XSS token-theft risk. The refresh token should be stored the same way.
+- **CSRF protection** — a direct consequence of the above: once the JWT lives in a cookie the browser sends it automatically on every request, reopening the CSRF attack surface. Mitigate with a synchronizer token (`@nestjs/csrf` / `csurf`) or the `SameSite=Strict` cookie attribute, which blocks cross-origin requests from carrying the cookie at all.
 - **RBAC caching** — cache permission lookups in Redis to avoid repeated DB queries on every request.
 - **Rate limiting** — per-user rate limits (currently global via `@nestjs/throttler`).
 - **Helmet** — add HTTP security headers.
