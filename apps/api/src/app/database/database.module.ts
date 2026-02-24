@@ -34,7 +34,7 @@ export const DB_ENTITIES = [
         const base = {
           entities: DB_ENTITIES,
           synchronize: !isProduction, // auto-creates tables in dev; use migrations in prod
-          logging: !isProduction,
+          logging: false,
         };
 
         if (dbType === 'postgres') {
