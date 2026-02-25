@@ -84,8 +84,7 @@ export class TaskOwnershipGuard implements CanActivate {
 
   /** PUT / PATCH / DELETE /tasks/:id — ownership check for Viewers. */
   private async checkModify(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    request: Record<string, any>,
+    request: { resolvedTask?: Task | null },
     user: User,
     taskId: string,
   ): Promise<boolean> {

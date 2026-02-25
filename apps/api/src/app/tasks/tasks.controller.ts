@@ -87,7 +87,7 @@ export class TasksController {
   @ApiResponse({ status: 200, description: 'Task reordered successfully' })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden — Owner or Admin only' })
+  @ApiResponse({ status: 403, description: 'Forbidden — no permission to reorder this task' })
   @ApiResponse({ status: 404, description: 'Task not found' })
   reorder(
     @CurrentUser() user: User,

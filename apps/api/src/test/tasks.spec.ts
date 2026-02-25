@@ -318,9 +318,17 @@ describe('Tasks API — RBAC matrix (integration)', () => {
       expect(res.status).toBe(200);
     });
 
-    it('Viewer cannot reorder tasks (403)', async () => {
+    it('Viewer can reorder own task (200)', async () => {
       const res = await request(app.getHttpServer())
         .patch(`/api/tasks/${seed.tasks.viewerTask.id}/reorder`)
+        .set('Authorization', `Bearer ${tokens.viewer1}`)
+        .send({ status: TaskStatus.IN_PROGRESS, position: 0 });
+      expect(res.status).toBe(200);
+    });
+
+    it("Viewer cannot reorder another user's task (403)", async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/tasks/${seed.tasks.engTask1.id}/reorder`)
         .set('Authorization', `Bearer ${tokens.viewer1}`)
         .send({ status: TaskStatus.IN_PROGRESS, position: 0 });
       expect(res.status).toBe(403);

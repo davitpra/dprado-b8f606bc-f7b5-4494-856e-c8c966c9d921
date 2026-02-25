@@ -400,16 +400,6 @@ describe('TasksService (unit)', () => {
       await expect(service.reorder(makeUser(), 'task-id', dto)).rejects.toThrow(ForbiddenException);
     });
 
-    it('throws ForbiddenException when Viewer tries to reorder', async () => {
-      taskRepo.findOne.mockResolvedValue(makeTask());
-      acl.canModifyTask.mockResolvedValue(true);
-      acl.isOwner.mockReturnValue(false);
-      acl.getUserRoleForDepartment.mockResolvedValue(UserRole.VIEWER);
-      await expect(
-        service.reorder(makeUser({ isOwner: false }), 'task-id', dto),
-      ).rejects.toThrow(ForbiddenException);
-    });
-
     it('Owner can reorder without role check', async () => {
       const task = makeTask();
       taskRepo.findOne.mockResolvedValueOnce(task).mockResolvedValueOnce(task);

@@ -1,13 +1,18 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 import { TaskKanbanComponent } from './task-kanban.component';
 import { TaskStore } from '../../../core/stores/task.store';
 import { AuthStore } from '../../../core/stores/auth.store';
 import { DepartmentStore } from '../../../core/stores/department.store';
 import { TaskService } from '../../../core/services/task.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { createMockAuthStore, createMockTaskStore, createMockDepartmentStore, createMockToastService } from '../../../testing/mock-stores';
+import {
+  createMockAuthStore,
+  createMockTaskStore,
+  createMockDepartmentStore,
+  createMockToastService,
+} from '../../../testing/mock-stores';
 import { makeTask, makeUser, makeDepartment } from '../../../testing/test-fixtures';
 import { ITask, TaskStatus } from '@task-management/data';
 
@@ -110,11 +115,11 @@ describe('TaskKanbanComponent', () => {
       createFixture();
 
       const task = makeTask({ id: 't1', status: TaskStatus.TODO });
-      const prevContainer = { id: TaskStatus.TODO, data: [task] } as any;
-      const currContainer = { id: TaskStatus.IN_PROGRESS, data: [] } as any;
+      const prevContainer = { id: TaskStatus.TODO, data: [task] } as unknown as CdkDropList<ITask[]>;
+      const currContainer = { id: TaskStatus.IN_PROGRESS, data: [] } as unknown as CdkDropList<ITask[]>;
 
       const event: Partial<CdkDragDrop<ITask[]>> = {
-        item: { data: task } as any,
+        item: { data: task } as unknown as CdkDrag<ITask>,
         previousContainer: prevContainer,
         container: currContainer,
         previousIndex: 0,
@@ -134,11 +139,11 @@ describe('TaskKanbanComponent', () => {
       createFixture();
 
       const task = makeTask({ id: 't1', status: TaskStatus.TODO });
-      const prevContainer = { id: TaskStatus.TODO, data: [task] } as any;
-      const currContainer = { id: TaskStatus.IN_PROGRESS, data: [] } as any;
+      const prevContainer = { id: TaskStatus.TODO, data: [task] } as unknown as CdkDropList<ITask[]>;
+      const currContainer = { id: TaskStatus.IN_PROGRESS, data: [] } as unknown as CdkDropList<ITask[]>;
 
       const event: Partial<CdkDragDrop<ITask[]>> = {
-        item: { data: task } as any,
+        item: { data: task } as unknown as CdkDrag<ITask>,
         previousContainer: prevContainer,
         container: currContainer,
         previousIndex: 0,
@@ -158,10 +163,10 @@ describe('TaskKanbanComponent', () => {
 
       const task = makeTask({ id: 't1', status: TaskStatus.TODO });
       const tasks = [task, makeTask({ id: 't2', status: TaskStatus.TODO })];
-      const container = { id: TaskStatus.TODO, data: tasks } as any;
+      const container = { id: TaskStatus.TODO, data: tasks } as unknown as CdkDropList<ITask[]>;
 
       const event: Partial<CdkDragDrop<ITask[]>> = {
-        item: { data: task } as any,
+        item: { data: task } as unknown as CdkDrag<ITask>,
         previousContainer: container,
         container: container,
         previousIndex: 0,
@@ -180,10 +185,10 @@ describe('TaskKanbanComponent', () => {
       const task = makeTask({ id: 't1', status: TaskStatus.TODO });
       const task2 = makeTask({ id: 't2', status: TaskStatus.TODO });
       const tasks = [task, task2];
-      const container = { id: TaskStatus.TODO, data: tasks } as any;
+      const container = { id: TaskStatus.TODO, data: tasks } as unknown as CdkDropList<ITask[]>;
 
       const event: Partial<CdkDragDrop<ITask[]>> = {
-        item: { data: task } as any,
+        item: { data: task } as unknown as CdkDrag<ITask>,
         previousContainer: container,
         container: container,
         previousIndex: 0,
@@ -205,11 +210,11 @@ describe('TaskKanbanComponent', () => {
       createFixture();
 
       const task = makeTask({ id: 't1', createdById: 'user-99' });
-      const container = { id: TaskStatus.TODO, data: [task] } as any;
+      const container = { id: TaskStatus.TODO, data: [task] } as unknown as CdkDropList<ITask[]>;
       const event: Partial<CdkDragDrop<ITask[]>> = {
-        item: { data: task } as any,
+        item: { data: task } as unknown as CdkDrag<ITask>,
         previousContainer: container,
-        container: { id: TaskStatus.IN_PROGRESS, data: [] } as any,
+        container: { id: TaskStatus.IN_PROGRESS, data: [] } as unknown as CdkDropList<ITask[]>,
         previousIndex: 0,
         currentIndex: 0,
       };

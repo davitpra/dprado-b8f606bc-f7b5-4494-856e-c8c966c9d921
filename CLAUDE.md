@@ -70,9 +70,9 @@ Swagger UI is available at `http://localhost:3000/api/docs` when the API is runn
 
 ### Apps
 
-| App | Stack | Port |
-|-----|-------|------|
-| `apps/api` | NestJS 11 | 3000 |
+| App              | Stack                   | Port |
+| ---------------- | ----------------------- | ---- |
+| `apps/api`       | NestJS 11               | 3000 |
 | `apps/dashboard` | Angular 21 (standalone) | 4200 |
 
 **API bootstrap** (`apps/api/src/main.ts`): global prefix `/api`, `ValidationPipe` (whitelist + transform), CORS origin `http://localhost:4200`, Swagger at `/api/docs`.
@@ -81,11 +81,11 @@ Swagger UI is available at `http://localhost:3000/api/docs` when the API is runn
 
 ### Shared Libraries
 
-| Library | Import path | Contents |
-|---------|-------------|----------|
-| `libs/data` | `@task-management/data` | Interfaces, enums (TaskStatus, TaskPriority, TaskCategory, UserRole) |
-| `libs/data` | `@task-management/data/dto` | DTOs with class-validator/Swagger decorators (**API-only**, never import from dashboard) |
-| `libs/auth` | `@task-management/auth` | Guards (JWT, Roles, Permissions), decorators (@CurrentUser, @Public, @Roles, @RequirePermission) |
+| Library     | Import path                 | Contents                                                                                         |
+| ----------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
+| `libs/data` | `@task-management/data`     | Interfaces, enums (TaskStatus, TaskPriority, TaskCategory, UserRole)                             |
+| `libs/data` | `@task-management/data/dto` | DTOs with class-validator/Swagger decorators (**API-only**, never import from dashboard)         |
+| `libs/auth` | `@task-management/auth`     | Guards (JWT, Roles, Permissions), decorators (@CurrentUser, @Public, @Roles, @RequirePermission) |
 
 ### Database
 
@@ -124,15 +124,15 @@ Organization
 
 ### Data Model (7 entities)
 
-| Entity | Key fields |
-|--------|-----------|
-| `Organization` | id, name, description, createdAt |
-| `Department` | id, name, organizationId (FK) |
-| `User` | id, email, password, firstName, lastName, organizationId (FK) |
-| `UserRole` | id, userId (FK), **role** (owner\|admin\|viewer), **departmentId** (FK, nullable) — OWNER has departmentId=null (org-wide) |
-| `Task` | id, title, status, category, priority, **position** (drag-drop order), dueDate, createdById, assignedToId (nullable), departmentId, deletedAt (soft delete) |
-| `Permission` | id, action (create\|read\|update\|delete\|invite), resource (task\|department\|user), role |
-| `AuditLog` | id, action, resource, resourceId, userId, ipAddress, timestamp, details (JSON) |
+| Entity         | Key fields                                                                                                                                                  |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Organization` | id, name, description, createdAt                                                                                                                            |
+| `Department`   | id, name, organizationId (FK)                                                                                                                               |
+| `User`         | id, email, password, firstName, lastName, organizationId (FK)                                                                                               |
+| `UserRole`     | id, userId (FK), **role** (owner\|admin\|viewer), **departmentId** (FK, nullable) — OWNER has departmentId=null (org-wide)                                  |
+| `Task`         | id, title, status, category, priority, **position** (drag-drop order), dueDate, createdById, assignedToId (nullable), departmentId, deletedAt (soft delete) |
+| `Permission`   | id, action (create\|read\|update\|delete\|invite), resource (task\|department\|user), role                                                                  |
+| `AuditLog`     | id, action, resource, resourceId, userId, ipAddress, timestamp, details (JSON)                                                                              |
 
 ### RBAC Access Check Flow
 
@@ -152,19 +152,19 @@ Does user have OWNER role in user_roles (departmentId = null)?
 
 ### RBAC Permissions Summary
 
-| Action | Owner | Admin | Viewer |
-|--------|-------|-------|--------|
-| Create/edit/delete Department | ✅ | ❌ | ❌ |
-| Invite user as Admin | ✅ | ❌ | ❌ |
-| Invite user as Viewer | ✅ | ✅ (own dept) | ❌ |
-| List department members | ✅ | ✅ (own dept) | ❌ |
-| Remove member (Viewer only) | ✅ | ✅ (own dept) | ❌ |
-| Update member role | ✅ | ❌ | ❌ |
-| Create task | ✅ | ✅ (own dept) | ❌ |
-| Read all tasks in dept | ✅ | ✅ (own dept) | ❌ |
-| Read/edit/delete own tasks | ✅ | ✅ | ✅ (own dept) |
-| Reorder tasks (kanban) | ✅ | ✅ (own dept) | ❌ |
-| View audit log | ✅ (all) | ✅ (own dept) | ❌ |
+| Action                        | Owner    | Admin         | Viewer        |
+| ----------------------------- | -------- | ------------- | ------------- |
+| Create/edit/delete Department | ✅       | ❌            | ❌            |
+| Invite user as Admin          | ✅       | ❌            | ❌            |
+| Invite user as Viewer         | ✅       | ✅ (own dept) | ❌            |
+| List department members       | ✅       | ✅ (own dept) | ❌            |
+| Remove member (Viewer only)   | ✅       | ✅ (own dept) | ❌            |
+| Update member role            | ✅       | ❌            | ❌            |
+| Create task                   | ✅       | ✅ (own dept) | ❌            |
+| Read all tasks in dept        | ✅       | ✅ (own dept) | ❌            |
+| Read/edit/delete own tasks    | ✅       | ✅            | ✅ (own dept) |
+| Reorder tasks (kanban)        | ✅       | ✅ (own dept) | ✅ (own dept) |
+| View audit log                | ✅ (all) | ✅ (own dept) | ❌            |
 
 ### API Endpoints
 
@@ -236,27 +236,27 @@ Browse available icons at https://lucide.dev/icons
 
 **Acme Corp** — Departments: Engineering, Marketing, Design
 
-| Email | Password | Role |
-|-------|----------|------|
-| owner@acme.com | Password123! | Owner |
-| admin.eng@acme.com | Password123! | Admin — Engineering |
-| admin.mkt@acme.com | Password123! | Admin — Marketing |
-| admin.design@acme.com | Password123! | Admin — Design |
-| viewer.eng@acme.com | Password123! | Viewer — Engineering |
-| viewer.mkt@acme.com | Password123! | Viewer — Marketing |
-| multi@acme.com | Password123! | Admin(Eng) + Viewer(Mkt) + Viewer(Design) |
+| Email                 | Password     | Role                                      |
+| --------------------- | ------------ | ----------------------------------------- |
+| owner@acme.com        | Password123! | Owner                                     |
+| admin.eng@acme.com    | Password123! | Admin — Engineering                       |
+| admin.mkt@acme.com    | Password123! | Admin — Marketing                         |
+| admin.design@acme.com | Password123! | Admin — Design                            |
+| viewer.eng@acme.com   | Password123! | Viewer — Engineering                      |
+| viewer.mkt@acme.com   | Password123! | Viewer — Marketing                        |
+| multi@acme.com        | Password123! | Admin(Eng) + Viewer(Mkt) + Viewer(Design) |
 
 **Globex Corp** — Departments: Product, Sales, Support
 
-| Email | Password | Role |
-|-------|----------|------|
-| owner@globex.com | Password123! | Owner |
-| admin.product@globex.com | Password123! | Admin — Product |
-| admin.sales@globex.com | Password123! | Admin — Sales |
-| admin.support@globex.com | Password123! | Admin — Support |
-| viewer.product@globex.com | Password123! | Viewer — Product |
-| viewer.sales@globex.com | Password123! | Viewer — Sales |
-| multi@globex.com | Password123! | Admin(Sales) + Viewer(Product) + Viewer(Support) |
+| Email                     | Password     | Role                                             |
+| ------------------------- | ------------ | ------------------------------------------------ |
+| owner@globex.com          | Password123! | Owner                                            |
+| admin.product@globex.com  | Password123! | Admin — Product                                  |
+| admin.sales@globex.com    | Password123! | Admin — Sales                                    |
+| admin.support@globex.com  | Password123! | Admin — Support                                  |
+| viewer.product@globex.com | Password123! | Viewer — Product                                 |
+| viewer.sales@globex.com   | Password123! | Viewer — Sales                                   |
+| multi@globex.com          | Password123! | Admin(Sales) + Viewer(Product) + Viewer(Support) |
 
 ### Key Technical Decisions
 
@@ -271,29 +271,30 @@ Browse available icons at https://lucide.dev/icons
 
 Integration tests use `@nestjs/testing` + `supertest` with an in-memory SQLite database (`:memory:`). ThrottlerGuard is disabled by overriding the throttler storage via `getStorageToken()` from `@nestjs/throttler`.
 
-**315 tests across 17 spec files:**
+**315 tests across 17 spec files:** <!-- net change: tasks.service.spec.ts -1, tasks.spec.ts +1 -->
 
-| File | Tests | Focus |
-|------|-------|-------|
-| `apps/api/src/app/access-control/access-control.service.spec.ts` | 27 | Unit — RBAC logic (mocked repos) |
-| `apps/api/src/app/access-control/permissions.guard.spec.ts` | 13 | Unit — PermissionsGuard (resolveDepartmentId, bypass, skip) |
-| `apps/api/src/app/access-control/task-ownership.guard.spec.ts` | 12 | Unit — TaskOwnershipGuard (create/modify, cache, 404) |
-| `apps/api/src/app/audit/audit.service.spec.ts` | 19 | Unit — AuditService log() + findAll() RBAC/filters/pagination |
-| `apps/api/src/app/audit/audit.interceptor.spec.ts` | 30 | Unit — AuditInterceptor skip/action/resource/departmentId/access_denied |
-| `apps/api/src/app/auth/auth.service.spec.ts` | 17 | Unit — AuthService register/login/refresh/validateToken |
-| `apps/api/src/app/auth/jwt.strategy.spec.ts` | 2 | Unit — JwtStrategy validate() (found/not found) |
-| `apps/api/src/app/departments/departments.service.spec.ts` | 14 | Unit — DepartmentsService CRUD (Owner-only guards, org scoping) |
-| `apps/api/src/app/department-members/department-members.service.spec.ts` | 21 | Unit — DepartmentMembersService invite/findAll/remove/updateRole |
-| `apps/api/src/app/organizations/organizations.service.spec.ts` | 8 | Unit — OrganizationsService getByUser/getUsersForOrg/createUser |
-| `apps/api/src/app/tasks/tasks.service.spec.ts` | 34 | Unit — TasksService create/findAll/findOne/update/reorder/remove |
-| `apps/api/src/test/auth.spec.ts` | 18 | Integration — Register, login, refresh, /me, JWT guard |
-| `apps/api/src/test/tasks.spec.ts` | 32 | Integration — Full RBAC matrix × all task endpoints |
-| `apps/api/src/test/departments.spec.ts` | 17 | Integration — Dept CRUD × Owner/Admin/Viewer |
-| `apps/api/src/test/members.spec.ts` | 21 | Integration — Invite, list, update role, remove |
-| `apps/api/src/test/organizations.spec.ts` | 11 | Integration — GET /me, POST /me/users, GET /me/users |
-| `apps/api/src/test/audit.spec.ts` | 19 | Integration — GET /audit-log RBAC, Admin scoping, all filters, entry shape |
+| File                                                                     | Tests | Focus                                                                      |
+| ------------------------------------------------------------------------ | ----- | -------------------------------------------------------------------------- |
+| `apps/api/src/app/access-control/access-control.service.spec.ts`         | 27    | Unit — RBAC logic (mocked repos)                                           |
+| `apps/api/src/app/access-control/permissions.guard.spec.ts`              | 13    | Unit — PermissionsGuard (resolveDepartmentId, bypass, skip)                |
+| `apps/api/src/app/access-control/task-ownership.guard.spec.ts`           | 12    | Unit — TaskOwnershipGuard (create/modify, cache, 404)                      |
+| `apps/api/src/app/audit/audit.service.spec.ts`                           | 19    | Unit — AuditService log() + findAll() RBAC/filters/pagination              |
+| `apps/api/src/app/audit/audit.interceptor.spec.ts`                       | 30    | Unit — AuditInterceptor skip/action/resource/departmentId/access_denied    |
+| `apps/api/src/app/auth/auth.service.spec.ts`                             | 17    | Unit — AuthService register/login/refresh/validateToken                    |
+| `apps/api/src/app/auth/jwt.strategy.spec.ts`                             | 2     | Unit — JwtStrategy validate() (found/not found)                            |
+| `apps/api/src/app/departments/departments.service.spec.ts`               | 14    | Unit — DepartmentsService CRUD (Owner-only guards, org scoping)            |
+| `apps/api/src/app/department-members/department-members.service.spec.ts` | 21    | Unit — DepartmentMembersService invite/findAll/remove/updateRole           |
+| `apps/api/src/app/organizations/organizations.service.spec.ts`           | 8     | Unit — OrganizationsService getByUser/getUsersForOrg/createUser            |
+| `apps/api/src/app/tasks/tasks.service.spec.ts`                           | 33    | Unit — TasksService create/findAll/findOne/update/reorder/remove           |
+| `apps/api/src/test/auth.spec.ts`                                         | 18    | Integration — Register, login, refresh, /me, JWT guard                     |
+| `apps/api/src/test/tasks.spec.ts`                                        | 33    | Integration — Full RBAC matrix × all task endpoints                        |
+| `apps/api/src/test/departments.spec.ts`                                  | 17    | Integration — Dept CRUD × Owner/Admin/Viewer                               |
+| `apps/api/src/test/members.spec.ts`                                      | 21    | Integration — Invite, list, update role, remove                            |
+| `apps/api/src/test/organizations.spec.ts`                                | 11    | Integration — GET /me, POST /me/users, GET /me/users                       |
+| `apps/api/src/test/audit.spec.ts`                                        | 19    | Integration — GET /audit-log RBAC, Admin scoping, all filters, entry shape |
 
 **Test infrastructure:**
+
 - `apps/api/src/test-setup.ts` — sets env vars before any module import
 - `apps/api/src/test/helpers/app.helper.ts` — `createTestApp()` builds a full NestJS test app
 - `apps/api/src/test/helpers/seed.helper.ts` — `seedTestData()` + `getToken()` helpers

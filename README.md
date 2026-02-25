@@ -327,7 +327,7 @@ O -->|NO| DENY4[❌ 403 Forbidden]
 | Create task                   |    ✅    | ✅ (own dept) |      ❌       |
 | Read all tasks in dept        |    ✅    | ✅ (own dept) |      ❌       |
 | Read/edit/delete own tasks    |    ✅    |      ✅       | ✅ (own dept) |
-| Reorder tasks (kanban)        |    ✅    | ✅ (own dept) |      ❌       |
+| Reorder tasks (kanban)        |    ✅    | ✅ (own dept) | ✅ (own dept) |
 | View audit log                | ✅ (all) | ✅ (own dept) |      ❌       |
 
 ### JWT Integration
